@@ -27,7 +27,7 @@ namespace $1
         public void GetInput(string fileName)
         {
             this.input = File.ReadAllText(fileName);
-            this._lines = input.Split("\n");
+            this._lines = input.Split(Environment.NewLine);
         }
         public void PartOne()
         {
