@@ -62,6 +62,23 @@ namespace Day1
                 this._elfSums.Add(elf, tempSum);
             }
         }
+        private double GetTopThreeElvesSum()
+        {
+            List<double> allSums = new();
+            foreach (double elf in this._elfSums.Keys)
+            {
+                allSums.Add(this._elfSums[elf]);
+            }
+            allSums.Sort();
+            double finalSum = 0;
+            for (int i = allSums.Count() - 1; i >= 0; i--)
+            {
+                if (i == allSums.Count() - 4) goto exit;
+                finalSum += allSums[i];
+            }
+        exit:
+            return finalSum;
+        }
         private double GetHighestSum()
         {
             List<double> allSums = new();
@@ -84,7 +101,9 @@ namespace Day1
         }
         public void PartTwo()
         {
-            Console.WriteLine("Part 2: ");
+            this.ParseElfCollection();
+            this.GatherElfCalorieSums();
+            Console.WriteLine("Part 2: {0}", this.GetTopThreeElvesSum());
         }
     }
 }
