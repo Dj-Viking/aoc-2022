@@ -53,28 +53,42 @@ namespace Day4
                 Console.WriteLine("current pairIndex [{0}]", string.Join(", ", this._elfPairTable[pairIndex]));
             }
         }
-        public List<bool[]> CreateElfPairRangeList(bool isSample, List<string> elf)
+        public List<bool[]> CreateElfPairRangeList(bool isSample, List<string> pair)
         {
             List<bool[]> rangeList = new();
             int array_size = isSample ? this._fullRange1 : this._fullRange2;
             bool[] tempRangeAlloc = new bool[array_size];
 
             // get min and max of pair and create bool range of spots they occupy
-            for (int i = 0; i < elf.Count(); i++) {
-                Console.WriteLine("what is pair here {0}", elf[i]);
-                int listMin = Int32.Parse(elf[i].Split("-")[0]);
-                int listMax = Int32.Parse(elf[i].Split("-")[1]);
+                Console.WriteLine("what is pair here {0}, {1}", pair[0], pair[1]);
+                int listMin1 = Int32.Parse(pair[0].Split("-")[0]);
+                int listMax1 = Int32.Parse(pair[0].Split("-")[1]);
+                int listMin2 = Int32.Parse(pair[1].Split("-")[0]);
+                int listMax2 = Int32.Parse(pair[1].Split("-")[1]);
+
                 for (int j = 0; j < tempRangeAlloc.Length; j++) {
-                    if ((j + 1) >= listMin && (j + 1) <= listMax) {
+                    if ((j + 1) >= listMin1 && (j + 1) <= listMax1) {
                         tempRangeAlloc[j] = true;
+                        Console.WriteLine("what is temprange alloc of bools [{0}]\n", string.Join(", ", tempRangeAlloc));
                     }
                 }
-                Console.WriteLine("what is temprange alloc of bools [{0}]\n", string.Join(", ", tempRangeAlloc));
+                
+                rangeList.Add(tempRangeAlloc);
+                
                 tempRangeAlloc = new bool[array_size];
-                return new List<bool[]>();
-            }
+                
+                for (int j = 0; j < tempRangeAlloc.Length; j++) {
+                    if ((j + 1) >= listMin2 && (j + 1) <= listMax2) {
+                        tempRangeAlloc[j] = true;
+                        Console.WriteLine("what is temprange alloc of bools [{0}]\n", string.Join(", ", tempRangeAlloc));
+                    }
+                }
+                
+                rangeList.Add(tempRangeAlloc);
+                
+                
+                return rangeList;
 
-            return rangeList;
         }
         public void PartOne()
         {
@@ -82,6 +96,7 @@ namespace Day4
             foreach (List<string> elf in this._elfPairTable.Values) 
             {
                 List<bool[]> elfPairRangeList = this.CreateElfPairRangeList(true, elf);
+                Console.WriteLine("elf pair range list [{0}], [{1}]", string.Join(", ", elfPairRangeList[0]), string.Join(", ", elfPairRangeList[1]));
             }
             string answer = "answer goes here";
             Console.WriteLine("Part 1: {0}", answer);
