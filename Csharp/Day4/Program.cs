@@ -8,6 +8,7 @@ namespace Day4
         public int _fullRange1 = 9;
         public int _fullRange2 = 99;
         public double _isFullyContainedCounter = 0;
+        public bool _isSample = false;
         public static void Main(string[] args)
         {
             new MainClass().Run(args);
@@ -16,10 +17,12 @@ namespace Day4
         {
             this.Init();
             this.GetInput(args[0]);
+            this._isSample = args[0] == "sample";
             this.PartOne();
 
             this.Init();
             this.GetInput(args[0]);
+            this._isSample = args[0] == "sample";
             this.PartTwo();
         }
         public void Init()
@@ -28,9 +31,6 @@ namespace Day4
             this._lines = new string[] { "" };
             this._elfPairTable = new Dictionary<int, List<string>>();
             this._isFullyContainedCounter = 0;
-            
-
-            Console.WriteLine("what is the bool array {0}", string.Join(", ", _fullRange1));
         }
         public void GetInput(string fileName)
         {
@@ -48,58 +48,74 @@ namespace Day4
                 this._elfPairTable[i] = elfPair;
                 elfPair = new List<string>();
             }
-            foreach (int pairIndex in this._elfPairTable.Keys)
-            {
-                Console.WriteLine("current pairIndex [{0}]", string.Join(", ", this._elfPairTable[pairIndex]));
-            }
         }
         public List<bool[]> CreateElfPairRangeList(bool isSample, List<string> pair)
         {
             List<bool[]> rangeList = new();
+
             int array_size = isSample ? this._fullRange1 : this._fullRange2;
+
             bool[] tempRangeAlloc = new bool[array_size];
 
             // get min and max of pair and create bool range of spots they occupy
-                Console.WriteLine("what is pair here {0}, {1}", pair[0], pair[1]);
-                int listMin1 = Int32.Parse(pair[0].Split("-")[0]);
-                int listMax1 = Int32.Parse(pair[0].Split("-")[1]);
-                int listMin2 = Int32.Parse(pair[1].Split("-")[0]);
-                int listMax2 = Int32.Parse(pair[1].Split("-")[1]);
+            int listMin1 = Int32.Parse(pair[0].Split("-")[0]);
+            int listMax1 = Int32.Parse(pair[0].Split("-")[1]);
+            int listMin2 = Int32.Parse(pair[1].Split("-")[0]);
+            int listMax2 = Int32.Parse(pair[1].Split("-")[1]);
 
-                for (int j = 0; j < tempRangeAlloc.Length; j++) {
-                    if ((j + 1) >= listMin1 && (j + 1) <= listMax1) {
-                        tempRangeAlloc[j] = true;
-                        Console.WriteLine("what is temprange alloc of bools [{0}]\n", string.Join(", ", tempRangeAlloc));
-                    }
+            for (int j = 0; j < tempRangeAlloc.Length; j++)
+            {
+                if ((j + 1) >= listMin1 && (j + 1) <= listMax1)
+                {
+                    tempRangeAlloc[j] = true;
                 }
-                
-                rangeList.Add(tempRangeAlloc);
-                
-                tempRangeAlloc = new bool[array_size];
-                
-                for (int j = 0; j < tempRangeAlloc.Length; j++) {
-                    if ((j + 1) >= listMin2 && (j + 1) <= listMax2) {
-                        tempRangeAlloc[j] = true;
-                        Console.WriteLine("what is temprange alloc of bools [{0}]\n", string.Join(", ", tempRangeAlloc));
-                    }
+            }
+
+            rangeList.Add(tempRangeAlloc);
+
+            tempRangeAlloc = new bool[array_size];
+
+            for (int j = 0; j < tempRangeAlloc.Length; j++)
+            {
+                if ((j + 1) >= listMin2 && (j + 1) <= listMax2)
+                {
+                    tempRangeAlloc[j] = true;
                 }
-                
-                rangeList.Add(tempRangeAlloc);
-                
-                
-                return rangeList;
+            }
+
+            rangeList.Add(tempRangeAlloc);
+
+            return rangeList;
 
         }
         public void PartOne()
         {
             this.CreateElfPairTable();
-            foreach (List<string> elf in this._elfPairTable.Values) 
+
+            foreach (List<string> elf in this._elfPairTable.Values)
             {
-                List<bool[]> elfPairRangeList = this.CreateElfPairRangeList(true, elf);
-                Console.WriteLine("elf pair range list [{0}], [{1}]", string.Join(", ", elfPairRangeList[0]), string.Join(", ", elfPairRangeList[1]));
+                List<bool[]> elfPairRangeList = this.CreateElfPairRangeList(this._isSample, elf);
+                int range_size = elfPairRangeList[0].Length;
+
+                int bothTrueCounter = 0;
+
+                for (int i = 0; i < range_size; i++)
+                {
+                    if (elfPairRangeList[1][i] == true &&
+                        elfPairRangeList[0][i] == true)
+                    {
+                        bothTrueCounter++;
+                    }
+                }
+
+                if (bothTrueCounter == elfPairRangeList[1].ToList().FindAll(x => x == true).Count() ||
+                    bothTrueCounter == elfPairRangeList[0].ToList().FindAll(x => x == true).Count())
+                {
+                    this._isFullyContainedCounter++;
+                }
+
             }
-            string answer = "answer goes here";
-            Console.WriteLine("Part 1: {0}", answer);
+            Console.WriteLine("Part 1: {0}", this._isFullyContainedCounter);
         }
         public void PartTwo()
         {
