@@ -119,8 +119,26 @@ namespace Day4
         }
         public void PartTwo()
         {
-            string answer = "answer goes here";
-            Console.WriteLine("Part 2: {0}", answer);
+            this.CreateElfPairTable();
+            int overlappingCounter = 0;
+            foreach (List<string> elf in this._elfPairTable.Values)
+            {
+                List<bool[]> elfPairRangeList = this.CreateElfPairRangeList(this._isSample, elf);
+                int range_size = elfPairRangeList[0].Length;
+
+
+                for (int i = 0; i < range_size; i++)
+                {
+                    if (elfPairRangeList[0][i] == true &&
+                        elfPairRangeList[1][i] == true)
+                    {
+                        overlappingCounter++;
+                        break;
+                    }
+                }
+            }
+
+            Console.WriteLine("Part 2: {0}", overlappingCounter);
         }
     }
 }
