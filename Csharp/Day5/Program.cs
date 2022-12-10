@@ -4,12 +4,12 @@ namespace Day5
     {
         public string input = "";
         public string[] _lines = new string[] { "" };
-        public Dictionary<int, List<char>> _craneSections = new();
+        public Dictionary<int, List<string>> _boxSections = new();
         public List<string> _instructions = new();
         public static void Main(string[] args)
         {
             new MainClass().Run(args);
-        }   
+        }
         public void Run(string[] args)
         {
             this.Init();
@@ -24,7 +24,7 @@ namespace Day5
         {
             this.input = "";
             this._lines = new string[] { "" };
-            this._craneSections = new Dictionary<int, List<char>>();
+            this._boxSections = new Dictionary<int, List<string>>();
             this._instructions = new List<string>();
         }
         public void GetInput(string fileName)
@@ -32,9 +32,24 @@ namespace Day5
             this.input = File.ReadAllText(fileName);
             this._lines = input.Split(Environment.NewLine);
         }
+        public void ParseBoxes()
+        {
+            this.DebugLines();
+            string[] sectionNumbers = this._lines[3].Split("_").ToList().Select(x => x.Trim()).ToArray();
+
+            Console.WriteLine("section numbers [{0}]", string.Join(",", sectionNumbers));
+
+        }
+        public void DebugLines()
+        {
+            for (int i = 0; i < this._lines.Length; i++)
+            {
+                Console.WriteLine("debug line {0}", this._lines[i]);
+            }
+        }
         public void PartOne()
         {
-            string answer = "answer goes here";
+            this.ParseBoxes();
             Console.WriteLine("Part 1: {0}", "answer goes here");
         }
         public void PartTwo()

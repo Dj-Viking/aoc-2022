@@ -1,7 +1,7 @@
-    [D]    
-[N] [C]    
-[Z] [M] [P]
- 1   2   3 
+ _D_    
+N_C_  
+Z_M_P
+1_2_3 
 
 move 1 from 2 to 1
 move 3 from 1 to 3
