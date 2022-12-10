@@ -42,15 +42,9 @@ namespace Day5
             {
                 if (string.IsNullOrEmpty(this._lines[i])) indexOfSectionNumbers = i - 1;
             }
-            Console.WriteLine("what is index of empty line {0}", indexOfSectionNumbers);
-
             string[] sectionNumbers = this._lines[indexOfSectionNumbers].Split("_").ToList().Select(x => x.Trim()).ToArray();
 
-            Console.WriteLine("section numbers [{0}]", string.Join(",", sectionNumbers));
-
             this.InitializeBoxDict(sectionNumbers);
-            this.DebugBoxDict();
-
 
             for (int i = 0; i < (this._isSample ? indexOfSectionNumbers : indexOfSectionNumbers + 1); i++)
             {
@@ -61,7 +55,6 @@ namespace Day5
             }
 
             this.DebugBoxDict();
-
 
         }
         public void ParseInstructions()
@@ -78,8 +71,7 @@ namespace Day5
                 instructionLines.Add(this._lines[i]);
             }
             Console.WriteLine("---- instruction lines \n{0}", string.Join("\n", instructionLines));
-
-
+            this._instructions = instructionLines;
         }
         public void DebugBoxDict()
         {
@@ -102,10 +94,53 @@ namespace Day5
                 Console.WriteLine("debug line {0}", this._lines[i]);
             }
         }
+        public void InterpretOp(string op)
+        {
+            string[] opSplit = op.Split(" ");
+            Console.WriteLine("split op line [{0}]", string.Join(", ", opSplit));
+
+            string amountToMove = "";
+            string sourceToMove = "";
+            string destToMove = "";
+
+            for (int i = 0; i < opSplit.Length; i++)
+            {
+                if (opSplit[i] == "move")
+                {
+                    amountToMove = opSplit[i + 1];
+                }
+                if (opSplit[i] == "from")
+                {
+                    sourceToMove = opSplit[i + 1];
+                }
+                if (opSplit[i] == "to")
+                {
+                    destToMove = opSplit[i + 1];
+                }
+            }
+
+            this.Move(amountToMove, sourceToMove, destToMove);
+        }
+        public void Move(string amount, string source, string dest)
+        {
+            int take = Int32.Parse(amount);
+            for (int i = 0; i < take; i++)
+            {
+                // this._boxSections[dest][i] = this._boxSections[source][i];
+                // this._boxSections[source][i] = "$";
+            }
+            this.DebugBoxDict();
+            Console.WriteLine("amount {0} from {1} to {2}", amount, source, dest);
+        }
         public void PartOne()
         {
             this.ParseBoxes();
-            // this.ParseInstructions();
+            this.ParseInstructions();
+
+            for (int i = 0; i < this._instructions.Count(); i++)
+            {
+                this.InterpretOp(this._instructions[i]);
+            }
             Console.WriteLine("Part 1: {0}", "answer goes here");
         }
         public void PartTwo()
