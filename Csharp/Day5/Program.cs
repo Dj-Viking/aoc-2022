@@ -6,6 +6,7 @@ namespace Day5
         public string[] _lines = new string[] { "" };
         public Dictionary<string, List<string>> _boxSections = new();
         public List<string> _instructions = new();
+        public bool _isSample = false;
         public static void Main(string[] args)
         {
             new MainClass().Run(args);
@@ -14,10 +15,12 @@ namespace Day5
         {
             this.Init();
             this.GetInput(args[0]);
+            this._isSample = args[0] == "sample.txt";
             this.PartOne();
 
             this.Init();
             this.GetInput(args[0]);
+            this._isSample = args[0] == "sample.txt";
             this.PartTwo();
         }
         public void Init()
@@ -34,26 +37,25 @@ namespace Day5
         }
         public void ParseBoxes()
         {
-            this.DebugLines();
-            int indexBeforeEmptyLine = 0;
-            string[] sectionNumbers = this._lines[3].Split("_").ToList().Select(x => x.Trim()).ToArray();
-
-            this.InitializeBoxDict(sectionNumbers);
-
-            this.DebugBoxDict();
-
+            int indexOfSectionNumbers = 0;
             for (int i = 0; i < this._lines.Length; i++)
             {
-                if (string.IsNullOrEmpty(this._lines[i])) indexBeforeEmptyLine = i - 1;
+                if (string.IsNullOrEmpty(this._lines[i])) indexOfSectionNumbers = i - 1;
             }
-            Console.WriteLine("what is index of empty line {0}", indexBeforeEmptyLine);
+            Console.WriteLine("what is index of empty line {0}", indexOfSectionNumbers);
 
-            for (int i = 0; i < indexBeforeEmptyLine; i++)
+            string[] sectionNumbers = this._lines[indexOfSectionNumbers].Split("_").ToList().Select(x => x.Trim()).ToArray();
+
+            Console.WriteLine("section numbers [{0}]", string.Join(",", sectionNumbers));
+
+            this.InitializeBoxDict(sectionNumbers);
+            this.DebugBoxDict();
+
+
+            for (int i = 0; i < (this._isSample ? indexOfSectionNumbers : indexOfSectionNumbers + 1); i++)
             {
-                for (int j = 0; j < sectionNumbers.Length; j++)
+                for (int j = 0; j < (this._isSample ? sectionNumbers.Length : sectionNumbers.Length - 1); j++)
                 {// get the column and put the strings of that column in the dict section number it goes in
-
-                    Console.WriteLine("first char in this.lines column {0}", this._lines[j][i]);
                     this._boxSections[(i + 1).ToString()].Add(this._lines[j][i].ToString());
                 }
             }
@@ -61,7 +63,22 @@ namespace Day5
             this.DebugBoxDict();
 
 
-            Console.WriteLine("section numbers [{0}]", string.Join(",", sectionNumbers));
+        }
+        public void ParseInstructions()
+        {
+            int indexAfterEmptyLine = 0;
+            for (int i = 0; i < this._lines.Length; i++)
+            {
+                if (string.IsNullOrEmpty(this._lines[i])) indexAfterEmptyLine = i + 1;
+            }
+
+            List<string> instructionLines = new();
+            for (int i = indexAfterEmptyLine; i < this._lines.Length; i++)
+            {
+                instructionLines.Add(this._lines[i]);
+            }
+            Console.WriteLine("---- instruction lines \n{0}", string.Join("\n", instructionLines));
+
 
         }
         public void DebugBoxDict()
@@ -88,6 +105,7 @@ namespace Day5
         public void PartOne()
         {
             this.ParseBoxes();
+            // this.ParseInstructions();
             Console.WriteLine("Part 1: {0}", "answer goes here");
         }
         public void PartTwo()
