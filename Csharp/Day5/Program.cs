@@ -60,7 +60,6 @@ namespace Day5
                 this._boxSections[key] = this._boxSections[key].FindAll(x => x != "$");
             }
 
-
         }
         public void ParseInstructions()
         {
@@ -98,7 +97,7 @@ namespace Day5
                 Console.WriteLine("debug line {0}", this._lines[i]);
             }
         }
-        public void InterpretOp(string op)
+        public void InterpretOp(string op, bool isPart1)
         {
             string[] opSplit = op.Split(" ");
 
@@ -108,21 +107,15 @@ namespace Day5
 
             for (int i = 0; i < opSplit.Length; i++)
             {
-                if (opSplit[i] == "move")
-                {
-                    amountToMove = opSplit[i + 1];
-                }
-                if (opSplit[i] == "from")
-                {
-                    sourceToMove = opSplit[i + 1];
-                }
-                if (opSplit[i] == "to")
-                {
-                    destToMove = opSplit[i + 1];
-                }
+                if (opSplit[i] == "move") amountToMove = opSplit[i + 1];
+
+                if (opSplit[i] == "from") sourceToMove = opSplit[i + 1];
+
+                if (opSplit[i] == "to") destToMove = opSplit[i + 1];
             }
 
-            this.Move(amountToMove, sourceToMove, destToMove);
+            if (isPart1) this.Move(amountToMove, sourceToMove, destToMove);
+            else this.Move2(amountToMove, sourceToMove, destToMove);
         }
         public void Move(string amount, string source, string dest)
         {
@@ -136,11 +129,32 @@ namespace Day5
 
             for (int i = 0; i < thingsToMove.Count(); i++)
             {
-                string popped = this._boxSections[source][0];
                 this._boxSections[source].RemoveAt(0);
                 this._boxSections[dest] = this._boxSections[dest].Prepend(thingsToMove[i]).ToList();
             }
 
+        }
+        public void Move2(string amount, string source, string dest)
+        {
+            int take = Int32.Parse(amount);
+            List<string> thingsToMove = new();
+
+            for (int i = 0; i < take; i++)
+            {
+                thingsToMove.Add(this._boxSections[source][i]);
+            }
+
+            // move all things from source at once from the top of the stack
+            for (int i = 0; i < thingsToMove.Count(); i++)
+            {
+                this._boxSections[source].RemoveAt(0);
+            }
+            // place all things from source to destination in the same order
+            thingsToMove.Reverse();
+            for (int i = 0; i < thingsToMove.Count(); i++)
+            {
+                this._boxSections[dest] = this._boxSections[dest].Prepend(thingsToMove[i]).ToList();
+            }
         }
         public bool HasEmptySlots(List<string> boxSection)
         {
@@ -155,19 +169,34 @@ namespace Day5
 
             for (int i = 0; i < this._instructions.Count(); i++)
             {
-                this.InterpretOp(this._instructions[i]);
+                this.InterpretOp(this._instructions[i], true);
             }
+
             List<string> answerList = new();
             foreach (string key in this._boxSections.Keys)
             {
                 answerList = answerList.Prepend(this._boxSections[key][0]).ToList();
             }
+            answerList.Reverse();
+
             Console.WriteLine("Part 1: {0}", string.Join("", answerList));
         }
         public void PartTwo()
         {
-            string answer = "answer goes here";
-            Console.WriteLine("Part 2: {0}", answer);
+            this.ParseBoxes();
+            this.ParseInstructions();
+            for (int i = 0; i < this._instructions.Count(); i++)
+            {
+                this.InterpretOp(this._instructions[i], false);
+            }
+
+            List<string> answerList = new();
+            foreach (string key in this._boxSections.Keys)
+            {
+                answerList = answerList.Prepend(this._boxSections[key][0]).ToList();
+            }
+            answerList.Reverse();
+            Console.WriteLine("Part 2: {0}", string.Join("", answerList));
         }
     }
 }
