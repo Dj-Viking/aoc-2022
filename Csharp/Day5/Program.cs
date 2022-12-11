@@ -54,7 +54,12 @@ namespace Day5
                 }
             }
 
-            this.DebugBoxDict();
+            // remove dollar signs used as placeholders
+            foreach (string key in this._boxSections.Keys)
+            {
+                this._boxSections[key] = this._boxSections[key].FindAll(x => x != "$");
+            }
+
 
         }
         public void ParseInstructions()
@@ -70,7 +75,6 @@ namespace Day5
             {
                 instructionLines.Add(this._lines[i]);
             }
-            Console.WriteLine("---- instruction lines \n{0}", string.Join("\n", instructionLines));
             this._instructions = instructionLines;
         }
         public void DebugBoxDict()
@@ -97,7 +101,6 @@ namespace Day5
         public void InterpretOp(string op)
         {
             string[] opSplit = op.Split(" ");
-            Console.WriteLine("split op line [{0}]", string.Join(", ", opSplit));
 
             string amountToMove = "";
             string sourceToMove = "";
@@ -124,13 +127,26 @@ namespace Day5
         public void Move(string amount, string source, string dest)
         {
             int take = Int32.Parse(amount);
+            List<string> thingsToMove = new();
+
             for (int i = 0; i < take; i++)
             {
-                // this._boxSections[dest][i] = this._boxSections[source][i];
-                // this._boxSections[source][i] = "$";
+                thingsToMove.Add(this._boxSections[source][i]);
             }
-            this.DebugBoxDict();
-            Console.WriteLine("amount {0} from {1} to {2}", amount, source, dest);
+
+            for (int i = 0; i < thingsToMove.Count(); i++)
+            {
+                string popped = this._boxSections[source][0];
+                this._boxSections[source].RemoveAt(0);
+                this._boxSections[dest] = this._boxSections[dest].Prepend(thingsToMove[i]).ToList();
+            }
+
+        }
+        public bool HasEmptySlots(List<string> boxSection)
+        {
+            int emptySlots = boxSection.FindAll(x => x == "$").Count();
+            if (emptySlots > 0) return true;
+            return false;
         }
         public void PartOne()
         {
@@ -141,7 +157,12 @@ namespace Day5
             {
                 this.InterpretOp(this._instructions[i]);
             }
-            Console.WriteLine("Part 1: {0}", "answer goes here");
+            List<string> answerList = new();
+            foreach (string key in this._boxSections.Keys)
+            {
+                answerList = answerList.Prepend(this._boxSections[key][0]).ToList();
+            }
+            Console.WriteLine("Part 1: {0}", string.Join("", answerList));
         }
         public void PartTwo()
         {
