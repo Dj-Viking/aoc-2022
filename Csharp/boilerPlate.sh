@@ -31,13 +31,11 @@ namespace $1
         }
         public void PartOne()
         {
-            string answer = "answer goes here";
-            Console.WriteLine("Part 1: {0}", answer);
+            Console.WriteLine("Part 1: {0}", "answer goes here");
         }
         public void PartTwo()
         {
-            string answer = "answer goes here";
-            Console.WriteLine("Part 2: {0}", answer);
+            Console.WriteLine("Part 2: {0}", "answer goes here");
         }
     }
 }

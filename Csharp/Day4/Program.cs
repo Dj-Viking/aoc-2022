@@ -17,12 +17,12 @@ namespace Day4
         {
             this.Init();
             this.GetInput(args[0]);
-            this._isSample = args[0] == "sample";
+            this._isSample = args[0] == "sample.txt";
             this.PartOne();
 
             this.Init();
             this.GetInput(args[0]);
-            this._isSample = args[0] == "sample";
+            this._isSample = args[0] == "sample.txt";
             this.PartTwo();
         }
         public void Init()
