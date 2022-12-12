@@ -4,10 +4,11 @@ namespace Day7
     {
         public string input = "";
         public string[] _lines = new string[] { "" };
+        public LinkedList<string> _linkedList = new();
         public static void Main(string[] args)
         {
             new MainClass().Run(args);
-        }   
+        }
         public void Run(string[] args)
         {
             this.Init();
@@ -23,6 +24,17 @@ namespace Day7
             this.input = "";
             this._lines = new string[] { "" };
         }
+        public void CreateTree()
+        {
+            this._linkedList = new(this._lines);
+        }
+        public void DebugTree()
+        {
+            foreach (string item in this._linkedList)
+            {
+                Console.WriteLine("item in linked list {0}", item);
+            }
+        }
         public void GetInput(string fileName)
         {
             this.input = File.ReadAllText(fileName);
@@ -30,6 +42,7 @@ namespace Day7
         }
         public void PartOne()
         {
+            this.CreateTree();
             Console.WriteLine("Part 1: {0}", "answer goes here");
         }
         public void PartTwo()
