@@ -16,8 +16,12 @@ namespace Day7
                 this._size = size;
             }
         }
-        public class Output : List<MyFile> { }
+        public class Output : List<MyFile>
+        {
+            public HashSet<string> _children = new();
+        }
         public Dictionary<string, Output> _terminalTree = new();
+        public Dictionary<string, double> _dirSizes = new();
         public static void Main(string[] args)
         {
             new MainClass().Run(args);
@@ -32,11 +36,17 @@ namespace Day7
             this.GetInput(args[0]);
             this.PartTwo();
         }
+        public void GetInput(string fileName)
+        {
+            this.input = File.ReadAllText(fileName);
+            this._lines = input.Split(Environment.NewLine);
+        }
         public void Init()
         {
             this.input = "";
             this._lines = new string[] { "" };
             this._terminalTree = new Dictionary<string, Output>();
+            this._dirSizes = new Dictionary<string, double>();
         }
         public void AllocateTree()
         {
@@ -46,6 +56,7 @@ namespace Day7
         {
 
             string currentDir = "";
+            string rootDir = this._linkedList.ElementAt(0).Split(" ")[2];
             Console.WriteLine("***** start reading file system");
             for (int i = 0; i < this._linkedList.Count(); i++)
             {
@@ -73,6 +84,8 @@ namespace Day7
                         {
                             tempDirname2 = this._linkedList.ElementAt(j).Split(" ")[1];
                             this._terminalTree.TryAdd(tempDirname2, new Output());
+                            this._terminalTree[currentDir]._children.Add(tempDirname2);
+                            this._terminalTree[rootDir]._children.Add(tempDirname2);
                         }
 
                         double fileSize = 0;
@@ -99,19 +112,47 @@ namespace Day7
                 Console.WriteLine(" --- current dir {0} ", dir);
                 foreach (MyFile file in this._terminalTree[dir])
                 {
-                    Console.WriteLine("-- has this file --\n filename: {0} - filesize: {1}", file._name, file._size);
+                    Console.WriteLine("-- has this file --\n filename: {0} - filesize: {1}\nCCCC dir {3} has children [{2}]", file._name, file._size, string.Join(", ", this._terminalTree[dir]._children), dir);
                 }
             }
         }
-        public void GetInput(string fileName)
+        public void CalculateDirSizes()
         {
-            this.input = File.ReadAllText(fileName);
-            this._lines = input.Split(Environment.NewLine);
+            foreach (string dir in this._terminalTree.Keys)
+            {
+                double sum = 0;
+
+                foreach (MyFile file in this._terminalTree[dir])
+                {
+                    sum += file._size;
+                }
+
+                if (this._terminalTree[dir]._children.Count() > 0)
+                {
+                    foreach (string childDir in this._terminalTree[dir]._children)
+                    {
+                        foreach (MyFile file2 in this._terminalTree[childDir])
+                        {
+                            sum += file2._size;
+                        }
+                    }
+                }
+                this._dirSizes.TryAdd(dir, sum);
+            }
+            this.DebugDirSizes();
+        }
+        public void DebugDirSizes()
+        {
+            foreach (string dir in this._dirSizes.Keys)
+            {
+                Console.WriteLine(" in dir {0} there is size {1}", dir, this._dirSizes[dir]);
+            }
         }
         public void PartOne()
         {
             this.AllocateTree();
             this.ParseTree();
+            this.CalculateDirSizes();
             Console.WriteLine("Part 1: {0}", "answer goes here");
         }
         public void PartTwo()
