@@ -148,12 +148,27 @@ namespace Day7
                 Console.WriteLine(" in dir {0} there is size {1}", dir, this._dirSizes[dir]);
             }
         }
+        public double GetSumOfDirsLessThan100k()
+        {
+            List<double> dirs = new();
+
+            foreach (double size in this._dirSizes.Values)
+            {
+                if (size <= 100000)
+                {
+                    dirs.Add(size);
+                }
+            }
+            Console.WriteLine("------ showing dirs less than 100000 [{0}]", string.Join(", ", dirs));
+
+            return dirs.Sum();
+        }
         public void PartOne()
         {
             this.AllocateTree();
             this.ParseTree();
             this.CalculateDirSizes();
-            Console.WriteLine("Part 1: {0}", "answer goes here");
+            Console.WriteLine("Part 1: {0}", this.GetSumOfDirsLessThan100k());
         }
         public void PartTwo()
         {
