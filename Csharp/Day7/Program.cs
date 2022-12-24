@@ -4,7 +4,13 @@ namespace Day7
     {
         public string input = "";
         public Dir _rootDir = new Dir("/", null);
+        public Dir bestDir = new Dir("/", null);
         public double _part1MaxSize = 100000;
+        public double _totalDiskSize = 70000000;
+        public double _requiredDiskSpace = 30000000;
+        public double usedSize = 0;
+        public double missingSize = 0;
+        public double unusedSize = 0;
         public Dir? _currentDir = null;
         public List<Dir> _smallDirs = new();
         public string[] _lines = new string[] { "" };
@@ -65,6 +71,10 @@ namespace Day7
         {
             this.input = "";
             this._lines = new string[] { "" };
+            this._smallDirs = new List<Dir>();
+            this._rootDir = new Dir("/", null);
+            this.bestDir = this._rootDir;
+            this._currentDir = null;
         }
         public void GetInput(string fileName)
         {
@@ -91,12 +101,12 @@ namespace Day7
                         }
                         else
                         {
-                            var targetName = lineSplit[2];
+                            string targetName = lineSplit[2];
                             // if the current directory doesn't have any directories with the current name of the output dir name
                             // create it and then 
                             if (this._currentDir!._dirs.FirstOrDefault(x => x._dirName == targetName) is not { } targetDirectory)
                             {
-                                var newDir = new Dir(targetName, this._currentDir);
+                                Dir newDir = new Dir(targetName, this._currentDir);
                                 this._currentDir._dirs.Add(newDir);
                                 targetDirectory = newDir;
                             }
@@ -127,7 +137,7 @@ namespace Day7
                 }
             }
         }
-        public void TraverseDirs(Dir source)
+        public void TraverseDirs1(Dir source)
         {
             if (source.totalDirSize <= this._part1MaxSize)
             {
@@ -135,18 +145,39 @@ namespace Day7
             }
             foreach (Dir dir in source._dirs)
             {
-                this.TraverseDirs(dir);
+                this.TraverseDirs1(dir);
+            }
+        }
+        public void TraverseDirs2(Dir source)
+        {
+            if (this.missingSize <= source.totalDirSize &&
+                this.bestDir.totalDirSize > source.totalDirSize)
+            {
+                this.bestDir = source;
+            }
+
+            foreach (Dir dir in source._dirs)
+            {
+                this.TraverseDirs2(dir);
             }
         }
         public void PartOne()
         {
             this.ParseCli();
-            this.TraverseDirs(this._rootDir);
+            this.TraverseDirs1(this._rootDir);
             Console.WriteLine("Part 1: {0}", this._smallDirs.Sum(d => d.totalDirSize));
         }
         public void PartTwo()
         {
-            Console.WriteLine("Part 2: {0}", "answer goes here");
+            this.ParseCli();
+
+            this.usedSize = this._rootDir.totalDirSize;
+            this.unusedSize = this._totalDiskSize - this.usedSize;
+            this.missingSize = this._requiredDiskSpace - this.unusedSize;
+
+            this.TraverseDirs2(this._rootDir);
+
+            Console.WriteLine("Part 2: {0}", this.bestDir.totalDirSize);
         }
     }
 }
