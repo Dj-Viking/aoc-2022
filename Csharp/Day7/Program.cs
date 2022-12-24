@@ -120,7 +120,6 @@ namespace Day7
                     {
                         if (!this._currentDir!.HasFile(lineSplit[1]))
                         {
-                            Console.WriteLine("wht is linesplit [0] {0}", lineSplit[0]);
                             MyFile newFile = new MyFile(lineSplit[1], double.Parse(lineSplit[0]));
                             this._currentDir._files.Add(newFile);
                         }
@@ -136,7 +135,7 @@ namespace Day7
             }
             foreach (Dir dir in source._dirs)
             {
-                TraverseDirs(dir);
+                this.TraverseDirs(dir);
             }
         }
         public void PartOne()
