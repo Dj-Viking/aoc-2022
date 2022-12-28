@@ -276,6 +276,137 @@ namespace Day8
                 }
             }
         }
+        public double GetHighestScenicTreeScore()
+        {
+            List<Tree> notEdges = new();
+            List<double> scoreList = new();
+            foreach (Tree tree in this.TreeList)
+            {
+                if (!IsNotEdge(tree)) this.VisibleTrees++;
+
+                if (IsNotEdge(tree))
+                {
+                    notEdges.Add(tree);
+                }
+            }
+
+            foreach (Tree tree in notEdges)
+            {
+
+                long upAmountVisible = 0;
+                long downAmountVisible = 0;
+                long leftAmountVisible = 0;
+                long rightAmountVisible = 0;
+
+                List<int> upList = tree.AdjacencyMapHeightList[tree.Signature]["up"]!;
+                List<int> downList = tree.AdjacencyMapHeightList[tree.Signature]["down"]!;
+                List<int> leftList = tree.AdjacencyMapHeightList[tree.Signature]["left"]!;
+                List<int> rightList = tree.AdjacencyMapHeightList[tree.Signature]["right"]!;
+
+                Dictionary<string, List<long>> treeScenicMap = new();
+
+                treeScenicMap.Add("up", new List<long>());
+                treeScenicMap.Add("down", new List<long>());
+                treeScenicMap.Add("left", new List<long>());
+                treeScenicMap.Add("right", new List<long>());
+
+                // if tree is visible from top and left || top and right || bottom and left || bottom and right
+                // this.visible++
+
+                foreach (int height in upList)
+                {
+                    if (height < tree.Height)
+                    {
+                        upAmountVisible++;
+                    }
+                    else if (height == tree.Height)
+                    {
+                        upAmountVisible++;
+                        break;
+                    }
+                    else if (height > tree.Height)
+                    {
+                        upAmountVisible++;
+                        break;
+                    }
+                }
+
+                treeScenicMap["up"].Add(upAmountVisible);
+
+                foreach (int height in downList)
+                {
+                    if (height < tree.Height)
+                    {
+                        downAmountVisible++;
+                    }
+                    else if (height == tree.Height)
+                    {
+                        downAmountVisible++;
+                        break;
+                    }
+                    else if (height > tree.Height)
+                    {
+                        downAmountVisible++;
+                        break;
+                    }
+                }
+
+                treeScenicMap["down"].Add(downAmountVisible);
+
+                foreach (int height in leftList)
+                {
+                    if (height < tree.Height)
+                    {
+                        leftAmountVisible++;
+                    }
+                    else if (height == tree.Height)
+                    {
+                        leftAmountVisible++;
+                        break;
+                    }
+                    else if (height > tree.Height)
+                    {
+                        leftAmountVisible++;
+                        break;
+                    }
+                }
+
+                treeScenicMap["left"].Add(leftAmountVisible);
+
+                foreach (int height in rightList)
+                {
+                    if (height < tree.Height)
+                    {
+                        rightAmountVisible++;
+                    }
+                    else if (height == tree.Height)
+                    {
+                        rightAmountVisible++;
+                        break;
+                    }
+                    else if (height > tree.Height)
+                    {
+                        rightAmountVisible++;
+                        break;
+                    }
+                }
+
+                treeScenicMap["right"].Add(rightAmountVisible);
+
+                double scenicScore = 1;
+
+                foreach (List<long> numList in treeScenicMap.Values)
+                {
+                    foreach (long num in numList)
+                    {
+                        scenicScore *= num;
+                    }
+                    scoreList.Add(scenicScore);
+                }
+
+            }
+            return scoreList.Max();
+        }
         public void PartOne()
         {
             this.InitInputGrid();
@@ -285,7 +416,9 @@ namespace Day8
         }
         public void PartTwo()
         {
-            Console.WriteLine("Part 2: {0}", "answer goes here");
+            this.InitInputGrid();
+            this.CreateTreesFromGrid();
+            Console.WriteLine("Part 2: {0}", this.GetHighestScenicTreeScore());
         }
     }
 }
