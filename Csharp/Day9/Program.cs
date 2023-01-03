@@ -94,13 +94,51 @@ namespace Day9
             }
 
         }
+        public class IsAdjacentResult
+        {
+            public bool isAdjacent = false;
+            public Vec2? diffVec = null;
+            public IsAdjacentResult(bool _isAdj, Vec2? diffVec)
+            {
+                this.isAdjacent = _isAdj;
+                if (diffVec is not null)
+                {
+                    this.diffVec = new Vec2(diffVec.x, diffVec.y);
+                }
+            }
+        }
 
         public class Graph
         {
             public string[][] grid { get; set; } = new string[][] { new string[] { "" } };
             public string[][] visited { get; set; } = new string[][] { new string[] { "" } };
             public Graph() { }
-            public bool IsTailAdjacentToHead(Rope rope)
+            public bool isHeadUp(bool isDiffEqualToTwo, Rope rope)
+            {
+                if (isDiffEqualToTwo && rope.head.Coords.x == (rope.tail.Coords.x - 1))
+                    return true;
+                else return false;
+            }
+            public bool isHeadDown(bool isDiffEqualToTwo, Rope rope)
+            {
+                if (isDiffEqualToTwo && rope.head.Coords.x == (rope.tail.Coords.x + 1))
+                    return true;
+                else return false;
+            }
+            public bool isHeadLeft(bool isDiffEqualToTwo, Rope rope)
+            {
+                if (isDiffEqualToTwo && rope.head.Coords.y == (rope.tail.Coords.y - 1))
+                    return true;
+                else return false;
+            }
+            public bool isHeadRight(bool isDiffEqualToTwo, Rope rope)
+            {
+                if (isDiffEqualToTwo && rope.head.Coords.y == (rope.tail.Coords.y + 1))
+                    return true;
+                else return false;
+            }
+
+            public IsAdjacentResult IsTailAdjacentToHead(Rope rope)
             {
                 int currentHeadX = rope.head.Coords.x;
                 int currentHeadY = rope.head.Coords.y;
@@ -113,13 +151,13 @@ namespace Day9
                 );
 
                 if ((diffVec.x == 1 && diffVec.y == 0) || (diffVec.y == 1 && diffVec.x == 0))
-                    return true;
+                    return new IsAdjacentResult(true, null);
                 else if (diffVec.x == 1 && diffVec.y == 1)
-                    return true;
+                    return new IsAdjacentResult(true, null);
                 else if (diffVec.x == 0 && diffVec.y == 0)
-                    return true;
+                    return new IsAdjacentResult(true, null);
                 else
-                    return false;
+                    return new IsAdjacentResult(false, diffVec);
             }
             private void TrackTailVisited(Rope rope)
             {
@@ -142,7 +180,7 @@ namespace Day9
                 this.grid[rope.head.Coords.x][rope.head.Coords.y] = "H";
                 this.TrackTailVisited(rope);
             }
-            public void DebugGraph(Rope rope, [CallerLineNumberAttribute] int lineNumber = 0)
+            public void DebugGraph([CallerLineNumberAttribute] int lineNumber = 0)
             {
                 Console.WriteLine($"----- debugging graph {lineNumber}");
                 Console.Write("  ");
@@ -201,7 +239,7 @@ namespace Day9
                 {
                     if (i < 10)
                     {
-                        Console.Write($"{i}  ");
+                        Console.Write($"{i} ");
 
                     }
                     else
@@ -310,75 +348,53 @@ namespace Day9
                             Console.WriteLine("---- moving RIGHT! this amount {0}", moveAmount);
                             if (this.rope.head.SetLocation(DirectionVec.right))
                             {
+                                this.graph.ResetCurrentPlottedPoints(this.rope);
                                 this.graph.PlotVisited(this.rope);
+                                this.graph.DebugGraph();
                             }
                             else
                             {
                                 this.graph.ResetCurrentPlottedPoints(this.rope);
+                                this.graph.PlotVisited(this.rope);
+                                this.graph.DebugGraph();
                                 continue;
                             }
 
-                            this.graph.DebugGraph(this.rope);
                             this.graph.ResetCurrentPlottedPoints(this.rope);
 
+                            IsAdjacentResult adjResult = this.graph.IsTailAdjacentToHead(this.rope);
 
-                            if (i == 1
-                                && !this.graph.IsTailAdjacentToHead(this.rope)
-                                && previousOp == OpName.D)
+                            if (!adjResult.isAdjacent && adjResult.diffVec is not null)
                             {
                                 tailDidMove = true;
-                                this.rope.tail.SetLocation(DirectionVec.downRight);
-                                this.graph.ResetCurrentPlottedPoints(this.rope);
 
-                                this.graph.PlotVisited(this.rope);
+                                if (adjResult.diffVec.y == 2 && adjResult.diffVec.x == 0)
+                                {
+                                    this.rope.tail.SetLocation(DirectionVec.right);
+                                }
+                                else if (this.graph.isHeadUp(adjResult.diffVec.y == 2, this.rope))
+                                {
+                                    this.rope.tail.SetLocation(DirectionVec.upRight);
+                                }
+                                else if (this.graph.isHeadDown(adjResult.diffVec.y == 2, this.rope))
+                                {
+                                    this.rope.tail.SetLocation(DirectionVec.downRight);
+                                }
                             }
-                            else if (i == 1
-                                && !this.graph.IsTailAdjacentToHead(this.rope)
-                                && previousOp == OpName.U)
+
+                            if (tailDidMove)
                             {
-                                tailDidMove = true;
-                                this.rope.tail.SetLocation(DirectionVec.upRight);
-                                this.graph.ResetCurrentPlottedPoints(this.rope);
-
-                                this.graph.PlotVisited(this.rope);
-                            }
-
-                            else if (i > 1
-                                && !tailDidMove
-                                && !this.graph.IsTailAdjacentToHead(this.rope)
-                                && previousOp == OpName.D)
-                            {
-                                tailDidMove = true;
-                                this.rope.tail.SetLocation(DirectionVec.downRight);
                                 this.graph.ResetCurrentPlottedPoints(this.rope);
                                 this.graph.PlotVisited(this.rope);
+                                this.graph.DebugGraph();
                             }
-                            else if (i > 1
-                                    && !tailDidMove
-                                    && !this.graph.IsTailAdjacentToHead(this.rope)
-                                    && previousOp == OpName.U)
-                            {
-                                tailDidMove = true;
-                                this.rope.tail.SetLocation(DirectionVec.upRight);
-                                this.graph.ResetCurrentPlottedPoints(this.rope);
-                                this.graph.PlotVisited(this.rope);
-                            }
-                            else if (!this.graph.IsTailAdjacentToHead(this.rope))
-                            {
-                                tailDidMove = true;
-                                this.rope.tail.SetLocation(DirectionVec.right);
-                                this.graph.ResetCurrentPlottedPoints(this.rope);
-                                this.graph.PlotVisited(this.rope);
-                            }
-
-
-                            this.graph.DebugGraph(this.rope);
 
                         }
 
                         Console.WriteLine("----result after RIGHT operation");
-
-                        this.graph.DebugGraph(this.rope);
+                        this.graph.ResetCurrentPlottedPoints(this.rope);
+                        this.graph.PlotVisited(this.rope);
+                        this.graph.DebugGraph();
                         this.graph.DebugTailVisited();
 
                         previousOp = opName;
@@ -392,73 +408,54 @@ namespace Day9
                             Console.WriteLine("---- moving LEFT! this amount {0}", moveAmount);
                             if (this.rope.head.SetLocation(DirectionVec.left))
                             {
-
+                                this.graph.ResetCurrentPlottedPoints(this.rope);
                                 this.graph.PlotVisited(this.rope);
+                                this.graph.DebugGraph();
+
                             }
                             else
                             {
                                 this.graph.ResetCurrentPlottedPoints(this.rope);
+                                this.graph.PlotVisited(this.rope);
+                                this.graph.DebugGraph();
                                 continue;
                             }
 
-                            this.graph.DebugGraph(this.rope);
                             this.graph.ResetCurrentPlottedPoints(this.rope);
 
-                            if (i == 1
-                                && !this.graph.IsTailAdjacentToHead(this.rope)
-                                && previousOp == OpName.U)
+                            IsAdjacentResult adjResult = this.graph.IsTailAdjacentToHead(this.rope);
+
+                            if (!adjResult.isAdjacent && adjResult.diffVec is not null)
                             {
                                 tailDidMove = true;
-                                this.rope.tail.SetLocation(DirectionVec.upLeft);
-                                this.graph.ResetCurrentPlottedPoints(this.rope);
-                                this.graph.PlotVisited(this.rope);
-                            }
-                            else if (i == 1
-                                    && !this.graph.IsTailAdjacentToHead(this.rope)
-                                    && previousOp == OpName.D)
-                            {
-                                tailDidMove = true;
-                                this.rope.tail.SetLocation(DirectionVec.downLeft);
-                                this.graph.ResetCurrentPlottedPoints(this.rope);
-                                this.graph.PlotVisited(this.rope);
+
+                                if (adjResult.diffVec.y == 2 && adjResult.diffVec.x == 0)
+                                {
+                                    this.rope.tail.SetLocation(DirectionVec.left);
+                                }
+                                else if (this.graph.isHeadDown(adjResult.diffVec.y == 2, this.rope))
+                                {
+                                    this.rope.tail.SetLocation(DirectionVec.downLeft);
+                                }
+                                else if (this.graph.isHeadUp(adjResult.diffVec.y == 2, this.rope))
+                                {
+                                    this.rope.tail.SetLocation(DirectionVec.upLeft);
+                                }
                             }
 
-                            else if (i > 1
-                                && !tailDidMove
-                                && !this.graph.IsTailAdjacentToHead(this.rope)
-                                && previousOp == OpName.D)
+                            if (tailDidMove)
                             {
-                                tailDidMove = true;
-                                this.rope.tail.SetLocation(DirectionVec.downLeft);
                                 this.graph.ResetCurrentPlottedPoints(this.rope);
                                 this.graph.PlotVisited(this.rope);
+                                this.graph.DebugGraph();
                             }
-                            else if (i > 1
-                                    && !tailDidMove
-                                    && !this.graph.IsTailAdjacentToHead(this.rope)
-                                    && previousOp == OpName.U)
-                            {
-                                tailDidMove = true;
-                                this.rope.tail.SetLocation(DirectionVec.upLeft);
-                                this.graph.ResetCurrentPlottedPoints(this.rope);
-                                this.graph.PlotVisited(this.rope);
-                            }
-                            else if (!this.graph.IsTailAdjacentToHead(this.rope))
-                            {
-                                tailDidMove = true;
-                                this.rope.tail.SetLocation(DirectionVec.left);
-                                this.graph.ResetCurrentPlottedPoints(this.rope);
-                                this.graph.PlotVisited(this.rope);
-                            }
-
-
-                            this.graph.DebugGraph(this.rope);
-
                         }
 
                         Console.WriteLine("----result after LEFT operation");
+                        this.graph.ResetCurrentPlottedPoints(this.rope);
+                        this.graph.PlotVisited(this.rope);
+                        this.graph.DebugGraph();
 
-                        this.graph.DebugGraph(this.rope);
                         this.graph.DebugTailVisited();
 
                         previousOp = opName;
@@ -473,72 +470,54 @@ namespace Day9
                             Console.WriteLine("---- moving UP! this amount {0}", moveAmount);
                             if (this.rope.head.SetLocation(DirectionVec.up))
                             {
+                                this.graph.ResetCurrentPlottedPoints(this.rope);
                                 this.graph.PlotVisited(this.rope);
+                                this.graph.DebugGraph();
                             }
                             else
                             {
                                 this.graph.ResetCurrentPlottedPoints(this.rope);
+                                this.graph.PlotVisited(this.rope);
+                                this.graph.DebugGraph();
                                 continue;
                             }
 
-                            this.graph.DebugGraph(this.rope);
                             this.graph.ResetCurrentPlottedPoints(this.rope);
 
-                            if (i == 1
-                                && !this.graph.IsTailAdjacentToHead(this.rope)
-                                && previousOp == OpName.R)
-                            {
-                                tailDidMove = true;
-                                this.rope.tail.SetLocation(DirectionVec.upRight);
-                                this.graph.ResetCurrentPlottedPoints(this.rope);
-                                this.graph.PlotVisited(this.rope);
-                            }
-                            else if (i == 1
-                                    && !this.graph.IsTailAdjacentToHead(this.rope)
-                                    && previousOp == OpName.L)
-                            {
-                                tailDidMove = true;
-                                this.rope.tail.SetLocation(DirectionVec.upLeft);
-                                this.graph.ResetCurrentPlottedPoints(this.rope);
-                                this.graph.PlotVisited(this.rope);
-                            }
+                            IsAdjacentResult adjResult = this.graph.IsTailAdjacentToHead(this.rope);
 
-                            else if (i > 1
-                                && !tailDidMove
-                                && !this.graph.IsTailAdjacentToHead(this.rope)
-                                && previousOp == OpName.R)
+                            if (!adjResult.isAdjacent && adjResult.diffVec is not null)
                             {
                                 tailDidMove = true;
-                                this.rope.tail.SetLocation(DirectionVec.upRight);
-                                this.graph.ResetCurrentPlottedPoints(this.rope);
-                                this.graph.PlotVisited(this.rope);
+
+                                if (adjResult.diffVec.x == 2 && adjResult.diffVec.y == 0)
+                                {
+                                    this.rope.tail.SetLocation(DirectionVec.up);
+                                }
+                                else if (this.graph.isHeadLeft(adjResult.diffVec.x == 2, this.rope))
+                                {
+                                    this.rope.tail.SetLocation(DirectionVec.upLeft);
+                                }
+                                else if (this.graph.isHeadRight(adjResult.diffVec.x == 2, this.rope))
+                                {
+                                    this.rope.tail.SetLocation(DirectionVec.upRight);
+                                }
 
                             }
-                            else if (i > 1
-                                    && !tailDidMove
-                                    && !this.graph.IsTailAdjacentToHead(this.rope)
-                                    && previousOp == OpName.L)
+
+                            if (tailDidMove)
                             {
-                                tailDidMove = true;
-                                this.rope.tail.SetLocation(DirectionVec.upLeft);
                                 this.graph.ResetCurrentPlottedPoints(this.rope);
                                 this.graph.PlotVisited(this.rope);
+                                this.graph.DebugGraph();
                             }
-                            else if (!this.graph.IsTailAdjacentToHead(this.rope))
-                            {
-                                tailDidMove = true;
-                                this.rope.tail.SetLocation(DirectionVec.up);
-                                this.graph.ResetCurrentPlottedPoints(this.rope);
-                                this.graph.PlotVisited(this.rope);
-                            }
-
-                            this.graph.DebugGraph(this.rope);
-
                         }
 
                         Console.WriteLine("----result after UP operation");
+                        this.graph.ResetCurrentPlottedPoints(this.rope);
+                        this.graph.PlotVisited(this.rope);
+                        this.graph.DebugGraph();
 
-                        this.graph.DebugGraph(this.rope);
                         this.graph.DebugTailVisited();
 
                         previousOp = opName;
@@ -552,67 +531,50 @@ namespace Day9
                             Console.WriteLine("---- moving DOWN! this amount {0}", moveAmount);
                             if (this.rope.head.SetLocation(DirectionVec.down))
                             {
+                                this.graph.ResetCurrentPlottedPoints(this.rope);
                                 this.graph.PlotVisited(this.rope);
+                                this.graph.DebugGraph();
                             }
                             else
                             {
                                 this.graph.ResetCurrentPlottedPoints(this.rope);
+                                this.graph.PlotVisited(this.rope);
+                                this.graph.DebugGraph();
                                 continue;
                             }
-                            this.graph.DebugGraph(this.rope);
+
                             this.graph.ResetCurrentPlottedPoints(this.rope);
 
+                            IsAdjacentResult adjResult = this.graph.IsTailAdjacentToHead(this.rope);
 
-                            if (i == 1
-                                && !this.graph.IsTailAdjacentToHead(this.rope)
-                                && previousOp == OpName.L)
+                            if (!adjResult.isAdjacent && adjResult.diffVec is not null)
                             {
                                 tailDidMove = true;
-                                this.rope.tail.SetLocation(DirectionVec.downLeft);
-                                this.graph.ResetCurrentPlottedPoints(this.rope);
-                                this.graph.PlotVisited(this.rope);
+                                if (adjResult.diffVec.x == 2 && adjResult.diffVec.y == 0)
+                                {
+                                    this.rope.tail.SetLocation(DirectionVec.down);
+                                }
+                                else if (this.graph.isHeadRight(adjResult.diffVec.x == 2, this.rope))
+                                {
+                                    this.rope.tail.SetLocation(DirectionVec.downRight);
+                                }
+                                else if (this.graph.isHeadLeft(adjResult.diffVec.x == 2, this.rope))
+                                {
+                                    this.rope.tail.SetLocation(DirectionVec.downLeft);
+                                }
                             }
-                            else if (i == 1
-                                    && !this.graph.IsTailAdjacentToHead(this.rope)
-                                    && previousOp == OpName.R)
+                            if (tailDidMove)
                             {
-                                tailDidMove = true;
-                                this.rope.tail.SetLocation(DirectionVec.downRight);
                                 this.graph.ResetCurrentPlottedPoints(this.rope);
                                 this.graph.PlotVisited(this.rope);
-                            }
-
-                            else if (i > 1
-                                && !tailDidMove
-                                && !this.graph.IsTailAdjacentToHead(this.rope)
-                                && previousOp == OpName.L)
-                            {
-                                tailDidMove = true;
-                                this.rope.tail.SetLocation(DirectionVec.downLeft);
-                                this.graph.ResetCurrentPlottedPoints(this.rope);
-                                this.graph.PlotVisited(this.rope);
-                            }
-                            else if (i > 1
-                                    && !tailDidMove
-                                    && !this.graph.IsTailAdjacentToHead(this.rope)
-                                    && previousOp == OpName.R)
-                            {
-                                tailDidMove = true;
-                                this.rope.tail.SetLocation(DirectionVec.downRight);
-                                this.graph.ResetCurrentPlottedPoints(this.rope);
-                                this.graph.PlotVisited(this.rope);
-                            }
-                            else if (!this.graph.IsTailAdjacentToHead(this.rope))
-                            {
-                                tailDidMove = true;
-                                this.rope.tail.SetLocation(DirectionVec.down);
-                                this.graph.ResetCurrentPlottedPoints(this.rope);
-                                this.graph.PlotVisited(this.rope);
+                                this.graph.DebugGraph();
                             }
                         }
 
                         Console.WriteLine("----result after DOWN operation");
-                        this.graph.DebugGraph(this.rope);
+                        this.graph.ResetCurrentPlottedPoints(this.rope);
+                        this.graph.PlotVisited(this.rope);
+                        this.graph.DebugGraph();
                         this.graph.DebugTailVisited();
 
                         previousOp = opName;
@@ -648,7 +610,7 @@ namespace Day9
             this.graph.PlotVisited(this.rope);
 
             Console.WriteLine("start");
-            this.graph.DebugGraph(this.rope);
+            this.graph.DebugGraph();
 
             this.MoveOperations();
 
