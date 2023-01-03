@@ -304,7 +304,7 @@ namespace Day9
                 }
             }
 
-            MAX_DIM = (dimensionList.Max() * (dimensionList.Max() * 2)) / 2;
+            MAX_DIM = (dimensionList.Max() * (dimensionList.Max() * 2));
 
             List<List<string>> strLists = new();
             List<List<bool>> boolLists = new();
