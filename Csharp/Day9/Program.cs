@@ -65,7 +65,7 @@ namespace Day9
 
                     if (newCoordX > MAX_DIM - 1 || newCoordY > MAX_DIM - 1) return false;
                     if (newCoordX < 0 || newCoordY < 0) return false;
-                    Console.WriteLine("setting head location [{0}, {1}]", newCoordX, newCoordY);
+                    // Console.WriteLine("setting head location [{0}, {1}]", newCoordX, newCoordY);
 
                     this.Coords.x = vec2.x;
                     this.Coords.y = vec2.y;
@@ -84,7 +84,7 @@ namespace Day9
 
                     if (newCoordX > MAX_DIM - 1 || newCoordY > MAX_DIM - 1) return false;
                     if (newCoordX < 0 || newCoordY < 0) return false;
-                    Console.WriteLine("setting tail location [{0}, {1}]", newCoordX, newCoordY);
+                    // Console.WriteLine("setting tail location [{0}, {1}]", newCoordX, newCoordY);
 
                     this.Coords.x = vec2.x;
                     this.Coords.y = vec2.y;
@@ -182,6 +182,7 @@ namespace Day9
             }
             public void DebugGraph([CallerLineNumberAttribute] int lineNumber = 0)
             {
+                return;
                 Console.WriteLine($"----- debugging graph {lineNumber}");
                 Console.Write("  ");
                 for (int k = 0; k < this.grid.Length; k++)
@@ -219,6 +220,7 @@ namespace Day9
             }
             public void DebugTailVisited([CallerLineNumberAttribute] int lineNumber = 0)
             {
+                // return;
                 Console.WriteLine("----- debugging tail visited {0}", lineNumber);
                 Console.Write("  ");
                 for (int k = 0; k < this.visited.Length; k++)
@@ -302,7 +304,7 @@ namespace Day9
                 }
             }
 
-            MAX_DIM = dimensionList.Max() + 1;
+            MAX_DIM = (dimensionList.Max() * (dimensionList.Max() * 2)) / 2;
 
             List<List<string>> strLists = new();
             List<List<bool>> boolLists = new();
@@ -327,9 +329,11 @@ namespace Day9
 
         public void InitPositionsOnGraph()
         {
-            START = new Start(MAX_DIM - 1, 0);
-            this.rope.head.SetLocation(new Vec2(MAX_DIM - 1, 0));
-            this.rope.tail.SetLocation(new Vec2(MAX_DIM - 1, 0));
+            int startX = MAX_DIM / 2;
+            int startY = MAX_DIM / 2 / 2;
+            START = new Start(startX, startY);
+            this.rope.head.SetLocation(new Vec2(START.x, START.y));
+            this.rope.tail.SetLocation(new Vec2(START.x, START.y));
         }
         public void MoveOperations()
         {
@@ -345,7 +349,7 @@ namespace Day9
                         for (int i = 0; i < moveAmount; i++)
                         {
                             this.graph.ResetCurrentPlottedPoints(this.rope);
-                            Console.WriteLine("---- moving RIGHT! this amount {0}", moveAmount);
+                            // Console.WriteLine("---- moving RIGHT! this amount {0}", moveAmount);
                             if (this.rope.head.SetLocation(DirectionVec.right))
                             {
                                 this.graph.ResetCurrentPlottedPoints(this.rope);
@@ -391,7 +395,7 @@ namespace Day9
 
                         }
 
-                        Console.WriteLine("----result after RIGHT operation");
+                        // Console.WriteLine("----result after RIGHT operation");
                         this.graph.ResetCurrentPlottedPoints(this.rope);
                         this.graph.PlotVisited(this.rope);
                         this.graph.DebugGraph();
@@ -405,7 +409,7 @@ namespace Day9
                         for (int i = 0; i < moveAmount; i++)
                         {
                             this.graph.ResetCurrentPlottedPoints(this.rope);
-                            Console.WriteLine("---- moving LEFT! this amount {0}", moveAmount);
+                            // Console.WriteLine("---- moving LEFT! this amount {0}", moveAmount);
                             if (this.rope.head.SetLocation(DirectionVec.left))
                             {
                                 this.graph.ResetCurrentPlottedPoints(this.rope);
@@ -451,7 +455,7 @@ namespace Day9
                             }
                         }
 
-                        Console.WriteLine("----result after LEFT operation");
+                        // Console.WriteLine("----result after LEFT operation");
                         this.graph.ResetCurrentPlottedPoints(this.rope);
                         this.graph.PlotVisited(this.rope);
                         this.graph.DebugGraph();
@@ -467,7 +471,7 @@ namespace Day9
                         for (int i = 0; i < moveAmount; i++)
                         {
                             this.graph.ResetCurrentPlottedPoints(this.rope);
-                            Console.WriteLine("---- moving UP! this amount {0}", moveAmount);
+                            // Console.WriteLine("---- moving UP! this amount {0}", moveAmount);
                             if (this.rope.head.SetLocation(DirectionVec.up))
                             {
                                 this.graph.ResetCurrentPlottedPoints(this.rope);
@@ -513,7 +517,7 @@ namespace Day9
                             }
                         }
 
-                        Console.WriteLine("----result after UP operation");
+                        // Console.WriteLine("----result after UP operation");
                         this.graph.ResetCurrentPlottedPoints(this.rope);
                         this.graph.PlotVisited(this.rope);
                         this.graph.DebugGraph();
@@ -528,7 +532,7 @@ namespace Day9
                         for (int i = 0; i < moveAmount; i++)
                         {
                             this.graph.ResetCurrentPlottedPoints(this.rope);
-                            Console.WriteLine("---- moving DOWN! this amount {0}", moveAmount);
+                            // Console.WriteLine("---- moving DOWN! this amount {0}", moveAmount);
                             if (this.rope.head.SetLocation(DirectionVec.down))
                             {
                                 this.graph.ResetCurrentPlottedPoints(this.rope);
@@ -571,7 +575,7 @@ namespace Day9
                             }
                         }
 
-                        Console.WriteLine("----result after DOWN operation");
+                        // Console.WriteLine("----result after DOWN operation");
                         this.graph.ResetCurrentPlottedPoints(this.rope);
                         this.graph.PlotVisited(this.rope);
                         this.graph.DebugGraph();
@@ -609,7 +613,7 @@ namespace Day9
 
             this.graph.PlotVisited(this.rope);
 
-            Console.WriteLine("start");
+            // Console.WriteLine("start");
             this.graph.DebugGraph();
 
             this.MoveOperations();
