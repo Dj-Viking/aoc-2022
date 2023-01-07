@@ -3,16 +3,7 @@ namespace Day9
 {
     class MainClass
     {
-        public class Coordinates
-        {
-            public int x { get; set; }
-            public int y { get; set; }
-            public Coordinates(int _x, int _y)
-            {
-                this.x = _x;
-                this.y = _y;
-            }
-        }
+        public static bool _dg = true;
         public class Vec2
         {
             public int x { get; set; }
@@ -49,50 +40,123 @@ namespace Day9
             public static readonly string U = "U";
             public static readonly string D = "D";
         }
+        public static bool IsInBounds(int index, dynamic list)
+        {
+            if (list is List<List<string>>)
+            {
+                return (index >= 0) && (index < ((List<List<string>>)list).Count());
+            }
+            else if (list is List<string>)
+            {
+                return (index >= 0) && (index < ((List<string>)list).Count());
+            }
+            else
+                return false;
+        }
         public class Rope
         {
             public Head head = new Head();
             public Tail tail = new Tail();
+            public Rope CreateCopy(Rope rope)
+            {
+                Rope newRope = new Rope();
+                newRope.head = new Head();
+                newRope.tail = new Tail();
+                newRope.head.Coords = new Vec2(rope.head.Coords.x, rope.head.Coords.y);
+                newRope.tail.Coords = new Vec2(rope.tail.Coords.x, rope.tail.Coords.y);
+
+                newRope.tail.visited = new List<List<bool>>();
+
+                for (int i = 0; i < rope.tail.visited.Count(); i++)
+                {
+                    List<bool> tempBoolList = new();
+                    for (int j = 0; j < rope.tail.visited.Count(); j++)
+                    {
+                        tempBoolList.Add(rope.tail.visited[i][j]);
+                    }
+                    newRope.tail.visited.Add(tempBoolList);
+                }
+
+                return newRope;
+            }
             public class Head
             {
-
-                public Coordinates Coords = new Coordinates(0, 0);
+                public Vec2 Coords = new Vec2(0, 0);
                 public Head() { }
-                public bool SetLocation(Vec2 vec2)
-                {
-                    int newCoordX = vec2.x += this.Coords.x;
-                    int newCoordY = vec2.y += this.Coords.y;
-
-                    if (newCoordX > MAX_DIM - 1 || newCoordY > MAX_DIM - 1) return false;
-                    if (newCoordX < 0 || newCoordY < 0) return false;
-                    // Console.WriteLine("setting head location [{0}, {1}]", newCoordX, newCoordY);
-
-                    this.Coords.x = vec2.x;
-                    this.Coords.y = vec2.y;
-                    return true;
-                }
             }
             public class Tail
             {
-                public Coordinates Coords = new Coordinates(0, 0);
-                public bool[][] visited { get; set; } = new bool[][] { new bool[] { false } };
+                public Vec2 Coords = new Vec2(0, 0);
+                public List<List<bool>> visited { get; set; } = new();
                 public Tail() { }
-                public bool SetLocation(Vec2 vec2)
-                {
-                    int newCoordX = vec2.x += this.Coords.x;
-                    int newCoordY = vec2.y += this.Coords.y;
-
-                    if (newCoordX > MAX_DIM - 1 || newCoordY > MAX_DIM - 1) return false;
-                    if (newCoordX < 0 || newCoordY < 0) return false;
-                    // Console.WriteLine("setting tail location [{0}, {1}]", newCoordX, newCoordY);
-
-                    this.Coords.x = vec2.x;
-                    this.Coords.y = vec2.y;
-                    this.visited[this.Coords.x][this.Coords.y] = true;
-                    return true;
-                }
             }
+            public bool SetHeadLocation(Vec2 vec2, Graph graph)
+            {
+                int newCoordX = vec2.x += this.head.Coords.x;
+                int newCoordY = vec2.y += this.head.Coords.y;
 
+                if (!IsInBounds(newCoordX, graph.grid) || !IsInBounds(newCoordY, graph.grid[newCoordX]))
+                {
+                    // copy the old grid and rope into new ones to make room for the locations that we want to set
+                    ResizeGrid(graph, this);
+                }
+
+                // apply new coordinates
+                graph.ResetCurrentPlottedPoints(this);
+                graph.DebugGraph();
+                this.head.Coords.x = vec2.x < 0 ? 0 : vec2.x;
+                this.head.Coords.y = vec2.y < 0 ? 0 : vec2.y;
+
+                // TODO: figure out how to shift all of the tail's visited locations relative to the resizing grid
+                if (vec2.y < 0)
+                {
+                    // shift all previous tail locations relative to the grid resize dimensions
+                    for (int i = 1; i < this.tail.visited.Count() - 1; i++)
+                    {
+                        for (int j = 1; j < this.tail.visited[i].Count() - 1; j++)
+                        {
+                            if (this.tail.visited[i - 1][j - 1])
+                            {
+                                this.tail.visited[i - 1][j] = true;
+                                this.tail.visited[i - 1][j - 1] = false;
+                            }
+                        }
+                    }
+                    this.tail.Coords.y += 1;
+                }
+                if (vec2.x < 0)
+                {
+                    // shift all previous tail locations relative to the grid resize dimensions
+                    for (int i = 1; i < this.tail.visited.Count() - 1; i++)
+                    {
+                        for (int j = 1; j < this.tail.visited[i].Count() - 1; j++)
+                        {
+                            if (this.tail.visited[i - 1][j - 1])
+                            {
+                                this.tail.visited[i][j - 1] = true;
+                                this.tail.visited[i - 1][j - 1] = false;
+                            }
+                        }
+                    }
+                    this.tail.Coords.x += 1;
+                }
+
+                // add new visited point for tail since the grid resized
+                this.tail.visited[this.tail.Coords.x][this.tail.Coords.y] = true;
+                graph.PlotVisited(this);
+                return true;
+            }
+            public bool SetTailLocation(Vec2 vec2, Graph graph)
+            {
+                int newCoordX = vec2.x += this.tail.Coords.x;
+                int newCoordY = vec2.y += this.tail.Coords.y;
+
+                this.tail.Coords.x = vec2.x;
+                this.tail.Coords.y = vec2.y;
+
+                this.tail.visited[this.tail.Coords.x][this.tail.Coords.y] = true;
+                return true;
+            }
         }
         public class IsAdjacentResult
         {
@@ -110,9 +174,34 @@ namespace Day9
 
         public class Graph
         {
-            public string[][] grid { get; set; } = new string[][] { new string[] { "" } };
-            public string[][] visited { get; set; } = new string[][] { new string[] { "" } };
+            public List<List<string>> grid { get; set; } = new List<List<string>>();
+            public List<List<string>> visited { get; set; } = new();
             public Graph() { }
+            public Graph CreateCopy(Graph graph)
+            {
+                Graph newGraph = new Graph();
+                newGraph.grid = new List<List<string>>();
+                for (int i = 0; i < graph.grid.Count(); i++)
+                {
+                    List<string> tempStrList = new();
+                    for (int j = 0; j < graph.grid[i].Count(); j++)
+                    {
+                        tempStrList.Add(graph.grid[i][j]);
+                    }
+                    newGraph.grid.Add(tempStrList);
+                }
+                newGraph.visited = new List<List<string>>();
+                for (int i = 0; i < graph.visited.Count(); i++)
+                {
+                    List<string> tempStrList = new();
+                    for (int j = 0; j < graph.visited[i].Count(); j++)
+                    {
+                        tempStrList.Add(graph.visited[i][j]);
+                    }
+                    newGraph.visited.Add(tempStrList);
+                }
+                return newGraph;
+            }
             public bool isHeadUp(bool isDiffEqualToTwo, Rope rope)
             {
                 if (isDiffEqualToTwo && rope.head.Coords.x == (rope.tail.Coords.x - 1))
@@ -161,8 +250,8 @@ namespace Day9
             }
             private void TrackTailVisited(Rope rope)
             {
-                for (int i = 0; i < rope.tail.visited.Length; i++)
-                    for (int j = 0; j < rope.tail.visited[i].Length; j++)
+                for (int i = 0; i < rope.tail.visited.Count(); i++)
+                    for (int j = 0; j < rope.tail.visited[i].Count(); j++)
                         if (rope.tail.visited[i][j])
                             this.visited[i][j] = "#";
 
@@ -175,47 +264,36 @@ namespace Day9
             public void PlotVisited(Rope rope)
             {
                 this.ResetCurrentPlottedPoints(rope);
-                this.grid[START.x][START.y] = "s";
+                // this.grid[START.x][START.y] = "s";
                 this.grid[rope.tail.Coords.x][rope.tail.Coords.y] = "T";
                 this.grid[rope.head.Coords.x][rope.head.Coords.y] = "H";
                 this.TrackTailVisited(rope);
             }
             public void DebugGraph([CallerLineNumberAttribute] int lineNumber = 0)
             {
-                return;
-                Console.WriteLine($"----- debugging graph {lineNumber}");
-                Console.Write("  ");
-                for (int k = 0; k < this.grid.Length; k++)
+                // return;
+                if (_dg)
                 {
-                    if (k < 10)
-                    {
-                        Console.Write($" {k} ");
 
-                    }
-                    else
+                    Console.WriteLine($"----- debugging graph {lineNumber}");
+                    Console.Write("  ");
+                    for (int k = 0; k < this.grid.Count(); k++)
                     {
-
-                        Console.Write($"{k} ");
-                    }
-                }
-                Console.WriteLine();
-                for (int i = 0; i < this.grid.Length; i++)
-                {
-                    if (i < 10)
-                    {
-                        Console.Write($"{i} ");
-
-                    }
-                    else
-                    {
-                        Console.Write($"{i}");
-
-                    }
-                    for (int j = 0; j < this.grid[i].Length; j++)
-                    {
-                        Console.Write($" {this.grid[i][j]} ");
+                        if (k < 10) Console.Write($" {k} ");
+                        else Console.Write($"{k} ");
                     }
                     Console.WriteLine();
+                    for (int i = 0; i < this.grid.Count(); i++)
+                    {
+                        if (i < 10) Console.Write($"{i} ");
+                        else Console.Write($"{i}");
+
+                        for (int j = 0; j < this.grid[i].Count(); j++)
+                        {
+                            Console.Write($" {this.grid[i][j]} ");
+                        }
+                        Console.WriteLine();
+                    }
                 }
             }
             public void DebugTailVisited([CallerLineNumberAttribute] int lineNumber = 0)
@@ -223,34 +301,23 @@ namespace Day9
                 // return;
                 Console.WriteLine("----- debugging tail visited {0}", lineNumber);
                 Console.Write("  ");
-                for (int k = 0; k < this.visited.Length; k++)
+                for (int k = 0; k < this.visited.Count(); k++)
                 {
-                    if (k < 10)
-                    {
-                        Console.Write($" {k} ");
-
-                    }
-                    else
-                    {
-
-                        Console.Write($"{k} ");
-                    }
+                    if (k < 10) Console.Write($" {k} ");
+                    else Console.Write($"{k} ");
                 }
                 Console.WriteLine();
-                for (int i = 0; i < this.visited.Length; i++)
+                for (int i = 0; i < this.visited.Count(); i++)
                 {
-                    if (i < 10)
-                    {
-                        Console.Write($"{i} ");
+                    if (i < 10) Console.Write($"{i} ");
+                    else Console.Write($"{i}");
 
-                    }
-                    else
+                    for (int j = 0; j < this.visited[i].Count(); j++)
                     {
-                        Console.Write($"{i}");
-                    }
-                    for (int j = 0; j < this.visited[i].Length; j++)
-                    {
-                        Console.Write($" {this.visited[i][j]} ");
+                        if (this.visited[i][j] == "#" || this.visited[i][j] == ".")
+                        {
+                            Console.Write($" {this.visited[i][j]} ");
+                        }
                     }
                     Console.WriteLine();
                 }
@@ -292,6 +359,47 @@ namespace Day9
                 this.OpMapList.Add(opObj);
             }
         }
+        public static void ResizeGrid(Graph graph, Rope rope)
+        {
+            Graph oldGraph = graph.CreateCopy(graph);
+            Rope oldRope = rope.CreateCopy(rope);
+            List<List<string>> strLists = new();
+            List<List<bool>> boolLists = new();
+
+            for (int i = 0; i < graph.grid.Count() + 1; i++)
+            {
+                List<string> tempStrList = new();
+                List<bool> tempBoolList = new();
+                for (int j = 0; j < graph.grid.Count() + 1; j++)
+                {
+                    tempStrList.Add(".");
+                    tempBoolList.Add(false);
+                }
+                strLists.Add(tempStrList);
+                boolLists.Add(tempBoolList);
+            }
+
+            graph.grid = strLists.Select(list => list.ToList()).ToList();
+            graph.visited = strLists.Select(list => list.ToList()).ToList();
+            rope.tail.visited = boolLists.Select(list => list.ToList()).ToList();
+
+            // re apply visited coordinates from old to new
+            for (int i = 0; i < oldGraph.grid.Count(); i++)
+            {
+                for (int j = 0; j < oldGraph.grid[i].Count(); j++)
+                {
+                    graph.visited[i][j] = oldGraph.grid[i][j];
+                }
+            }
+            for (int i = 0; i < oldRope.tail.visited.Count(); i++)
+            {
+                for (int j = 0; j < oldRope.tail.visited.Count(); j++)
+                {
+                    rope.tail.visited[i][j] = oldRope.tail.visited[i][j];
+                }
+            }
+
+        }
         public void InitGraph()
         {
 
@@ -304,7 +412,7 @@ namespace Day9
                 }
             }
 
-            MAX_DIM = (dimensionList.Max() * (dimensionList.Max() * 2));
+            MAX_DIM = dimensionList.Max() + 1;
 
             List<List<string>> strLists = new();
             List<List<bool>> boolLists = new();
@@ -322,18 +430,18 @@ namespace Day9
                 boolLists.Add(tempList2);
             }
 
-            this.graph.grid = strLists.Select(list => list.ToArray()).ToArray();
-            this.graph.visited = strLists.Select(list => list.ToArray()).ToArray();
-            this.rope.tail.visited = boolLists.Select(list => list.ToArray()).ToArray();
+            this.graph.grid = strLists.Select(list => list.ToList()).ToList();
+            this.graph.visited = strLists.Select(list => list.ToList()).ToList();
+            this.rope.tail.visited = boolLists.Select(list => list.ToList()).ToList();
         }
 
         public void InitPositionsOnGraph()
         {
-            int startX = MAX_DIM / 2;
-            int startY = MAX_DIM / 2 / 2;
+            int startX = MAX_DIM - 1;
+            int startY = 0;
             START = new Start(startX, startY);
-            this.rope.head.SetLocation(new Vec2(START.x, START.y));
-            this.rope.tail.SetLocation(new Vec2(START.x, START.y));
+            this.rope.SetHeadLocation(new Vec2(startX, startY), this.graph);
+            this.rope.SetTailLocation(new Vec2(startX, startY), this.graph);
         }
         public void MoveOperations()
         {
@@ -348,9 +456,8 @@ namespace Day9
                     {
                         for (int i = 0; i < moveAmount; i++)
                         {
-                            this.graph.ResetCurrentPlottedPoints(this.rope);
                             // Console.WriteLine("---- moving RIGHT! this amount {0}", moveAmount);
-                            if (this.rope.head.SetLocation(DirectionVec.right))
+                            if (this.rope.SetHeadLocation(DirectionVec.right, this.graph))
                             {
                                 this.graph.ResetCurrentPlottedPoints(this.rope);
                                 this.graph.PlotVisited(this.rope);
@@ -374,15 +481,15 @@ namespace Day9
 
                                 if (adjResult.diffVec.y == 2 && adjResult.diffVec.x == 0)
                                 {
-                                    this.rope.tail.SetLocation(DirectionVec.right);
+                                    this.rope.SetTailLocation(DirectionVec.right, this.graph);
                                 }
                                 else if (this.graph.isHeadUp(adjResult.diffVec.y == 2, this.rope))
                                 {
-                                    this.rope.tail.SetLocation(DirectionVec.upRight);
+                                    this.rope.SetTailLocation(DirectionVec.upRight, this.graph);
                                 }
                                 else if (this.graph.isHeadDown(adjResult.diffVec.y == 2, this.rope))
                                 {
-                                    this.rope.tail.SetLocation(DirectionVec.downRight);
+                                    this.rope.SetTailLocation(DirectionVec.downRight, this.graph);
                                 }
                             }
 
@@ -408,14 +515,12 @@ namespace Day9
                     {
                         for (int i = 0; i < moveAmount; i++)
                         {
-                            this.graph.ResetCurrentPlottedPoints(this.rope);
                             // Console.WriteLine("---- moving LEFT! this amount {0}", moveAmount);
-                            if (this.rope.head.SetLocation(DirectionVec.left))
+                            if (this.rope.SetHeadLocation(DirectionVec.left, this.graph))
                             {
                                 this.graph.ResetCurrentPlottedPoints(this.rope);
                                 this.graph.PlotVisited(this.rope);
                                 this.graph.DebugGraph();
-
                             }
                             else
                             {
@@ -435,15 +540,15 @@ namespace Day9
 
                                 if (adjResult.diffVec.y == 2 && adjResult.diffVec.x == 0)
                                 {
-                                    this.rope.tail.SetLocation(DirectionVec.left);
+                                    this.rope.SetTailLocation(DirectionVec.left, this.graph);
                                 }
                                 else if (this.graph.isHeadDown(adjResult.diffVec.y == 2, this.rope))
                                 {
-                                    this.rope.tail.SetLocation(DirectionVec.downLeft);
+                                    this.rope.SetTailLocation(DirectionVec.downLeft, this.graph);
                                 }
                                 else if (this.graph.isHeadUp(adjResult.diffVec.y == 2, this.rope))
                                 {
-                                    this.rope.tail.SetLocation(DirectionVec.upLeft);
+                                    this.rope.SetTailLocation(DirectionVec.upLeft, this.graph);
                                 }
                             }
 
@@ -470,9 +575,8 @@ namespace Day9
                     {
                         for (int i = 0; i < moveAmount; i++)
                         {
-                            this.graph.ResetCurrentPlottedPoints(this.rope);
                             // Console.WriteLine("---- moving UP! this amount {0}", moveAmount);
-                            if (this.rope.head.SetLocation(DirectionVec.up))
+                            if (this.rope.SetHeadLocation(DirectionVec.up, this.graph))
                             {
                                 this.graph.ResetCurrentPlottedPoints(this.rope);
                                 this.graph.PlotVisited(this.rope);
@@ -496,15 +600,15 @@ namespace Day9
 
                                 if (adjResult.diffVec.x == 2 && adjResult.diffVec.y == 0)
                                 {
-                                    this.rope.tail.SetLocation(DirectionVec.up);
+                                    this.rope.SetTailLocation(DirectionVec.up, this.graph);
                                 }
                                 else if (this.graph.isHeadLeft(adjResult.diffVec.x == 2, this.rope))
                                 {
-                                    this.rope.tail.SetLocation(DirectionVec.upLeft);
+                                    this.rope.SetTailLocation(DirectionVec.upLeft, this.graph);
                                 }
                                 else if (this.graph.isHeadRight(adjResult.diffVec.x == 2, this.rope))
                                 {
-                                    this.rope.tail.SetLocation(DirectionVec.upRight);
+                                    this.rope.SetTailLocation(DirectionVec.upRight, this.graph);
                                 }
 
                             }
@@ -531,9 +635,8 @@ namespace Day9
                     {
                         for (int i = 0; i < moveAmount; i++)
                         {
-                            this.graph.ResetCurrentPlottedPoints(this.rope);
                             // Console.WriteLine("---- moving DOWN! this amount {0}", moveAmount);
-                            if (this.rope.head.SetLocation(DirectionVec.down))
+                            if (this.rope.SetHeadLocation(DirectionVec.down, this.graph))
                             {
                                 this.graph.ResetCurrentPlottedPoints(this.rope);
                                 this.graph.PlotVisited(this.rope);
@@ -556,15 +659,15 @@ namespace Day9
                                 tailDidMove = true;
                                 if (adjResult.diffVec.x == 2 && adjResult.diffVec.y == 0)
                                 {
-                                    this.rope.tail.SetLocation(DirectionVec.down);
+                                    this.rope.SetTailLocation(DirectionVec.down, this.graph);
                                 }
                                 else if (this.graph.isHeadRight(adjResult.diffVec.x == 2, this.rope))
                                 {
-                                    this.rope.tail.SetLocation(DirectionVec.downRight);
+                                    this.rope.SetTailLocation(DirectionVec.downRight, this.graph);
                                 }
                                 else if (this.graph.isHeadLeft(adjResult.diffVec.x == 2, this.rope))
                                 {
-                                    this.rope.tail.SetLocation(DirectionVec.downLeft);
+                                    this.rope.SetTailLocation(DirectionVec.downLeft, this.graph);
                                 }
                             }
                             if (tailDidMove)
@@ -590,7 +693,7 @@ namespace Day9
         public double GetTailLocationsAmount()
         {
             double tailVisited = 0;
-            foreach (string[] line in this.graph.visited)
+            foreach (List<string> line in this.graph.visited)
             {
                 foreach (string chr in line)
                 {
