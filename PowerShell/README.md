@@ -2,7 +2,7 @@
 
 ```sh
 git clone git@github.com:Dj-Viking/aoc-2022.git; \
-cd aoc-2022/CSharp; \
+cd aoc-2022/PowerShell; \
 ```
 
 # development
