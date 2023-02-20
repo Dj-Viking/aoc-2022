@@ -31,7 +31,7 @@ cd "$DAYDIR"
 
 echo "printing solution..."
 
-powershell -File "Day$1.ps1"
+powershell -NoProfile -File "Day$1.ps1" $1 $2
 
 echo ""
 echo "done"

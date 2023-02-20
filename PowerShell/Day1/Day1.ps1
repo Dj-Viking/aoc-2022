@@ -2,6 +2,10 @@
 [String]$answer1 = "answer goes here"
 [String]$answer2 = "answer goes here"
 
+. ..\ReadInput.ps1
+
+$myInput = Read-Input $args[1]
+
 Function PartOne {
     Write-Host "[INFO]: solving part one..." -ForegroundColor Cyan
     Write-Host "[INFO]: part one answer is $answer1" -ForegroundColor Green
