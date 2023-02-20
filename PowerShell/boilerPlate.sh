@@ -2,6 +2,7 @@ cat << EOF > $1.ps1
 
 [String]\$answer1 = "answer goes here"
 [String]\$answer2 = "answer goes here"
+[String]\$myInput = ""
 
 . ..\ReadInput.ps1
 
@@ -18,5 +19,4 @@ Function PartTwo {
 
 PartOne
 PartTwo
-
 EOF

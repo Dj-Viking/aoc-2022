@@ -1,6 +1,7 @@
 
 [String]$answer1 = "answer goes here"
 [String]$answer2 = "answer goes here"
+[String]$myInput = ""
 
 . ..\ReadInput.ps1
 
