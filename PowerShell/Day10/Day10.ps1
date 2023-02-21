@@ -16,6 +16,29 @@ $lines = Get-InputLines $myInput
 [Int64]$sigStr = 0
 [Int64]$cycles = 0
 
+[System.Collections.Hashtable]$spriteVisibilityTable = [System.Collections.Hashtable]@{}
+#init hash table to store which columns the sprite will be visible
+for ($i = 0; $i -lt 240; $i++) {
+    if ($i % 3 -eq 0) {
+        $spriteVisibilityTable[$i] = "$($i),$($i + 1),$($i + 2)"
+    }
+}
+
+foreach ($Key in $spriteVisibilityTable.Keys) {
+    "The value of '$Key' is: $($spriteVisibilityTable[$Key])"
+}
+
+$crtScreen = New-Object 'string[,]' 6, 40  # create a 6x40 array of strings
+#initialize the 2d array to have 'dark pixels'
+for ($col = 0; $col -lt 6; $col++) {
+    for ($row = 0; $row -lt 40; $row++) {
+        $crtScreen[$col,$row] = "."
+    }
+}
+
+[Int64]$currentRow = 0
+[Int64]$currentCol = 0
+
 Function CheckCycle1([Int64]$cycles, [Int64]$register) {
 
     $sigStr = 0
@@ -54,24 +77,32 @@ Function CheckCycle1([Int64]$cycles, [Int64]$register) {
     }
 }
 
-Function Check-Cycle2([Int64]$cycles, [Int64]$register, $screen, $currentRow, $currentCol) {
-    if ($cycles -gt 0 && $cycles -lt 41) {
-
+Function CheckCycle2([Int64]$cycles, [Int64]$register) {
+    
+    
+    if ($cycles -ge 0 -and $cycles -le 40) {
+        $currentRow = 0
+        
     }
-    elseif ($cycles -gt 41 && $cycles -lt 81) {
-
+    elseif ($cycles -ge 41 -and $cycles -le 80) {
+        $currentRow = 1
+        
     }
-    elseif ($cycles -gt 81 && $cycles -lt 121) {
-
+    elseif ($cycles -ge 81 -and $cycles -le 120) {
+        $currentRow = 2
+        
     }
-    elseif ($cycles -gt 121 && $cycles -lt 161) {
-
+    elseif ($cycles -ge 121 -and $cycles -le 160) {
+        $currentRow = 3
+        
     }
-    elseif ($cycles -gt 161 && $cycles -lt 201) {
-
+    elseif ($cycles -ge 161 -and $cycles -le 200) {
+        $currentRow = 4
+        
     }
-    elseif ($cycles -gt 201 && $cycles -lt 241) {
-
+    elseif ($cycles -ge 201 -and $cycles -le 240) {
+        $currentRow = 5
+        
     }
 }
 
@@ -104,10 +135,11 @@ Function PartOne {
                 $cycles = $cycles + 1
 
                 CheckCycle1 $cycles $register
-
+                
                 if ($i -eq 1) {
                     $register = $register + [Int]$value
                 }
+                
             }
         }
 
@@ -127,17 +159,8 @@ Function PartOne {
 }
 Function PartTwo {
 
-    $crtScreen = New-Object 'string[,]' 6, 40  # create a 6x40 array of strings
     $_cycles = 0
-
-    $currentRow = 0
-    $currentCol = 0
-
-    for ($col = 0; $col -lt 6; $col++) {
-        for ($row = 0; $row -lt 40; $row++) {
-            $crtScreen[$col,$row] = "."
-        }
-    }
+    $_register = 1
 
     Write-Host "crt screen"
 
@@ -150,18 +173,25 @@ Function PartTwo {
 
         if ($instruction -eq "noop") {
             $_cycles = $_cycles + 1
-
             $currentCol = $currentCol + 1
 
-
+            CheckCycle2 $_cycles $_register
 
             continue
         }
         elseif ($instruction -eq "addx") {
-            $currentCol = $currentCol + 1
+            
+            for ($i = 0; $i -lt 2; $i++) {
+                $_cycles = $_cycles + 1
+                $currentCol = $currentCol + 1
 
+                CheckCycle2 $_cycles $_register
+                
+                if ($i -eq 1) {
+                    $_register = $_register + [Int]$value
+                }
 
-
+            }
         }
     }
     
