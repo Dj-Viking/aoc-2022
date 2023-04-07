@@ -32,7 +32,7 @@ $crtScreen = New-Object 'string[,]' 6, 40  # create a 6x40 array of strings
 #initialize the 2d array to have 'dark pixels'
 for ($col = 0; $col -lt 6; $col++) {
     for ($row = 0; $row -lt 40; $row++) {
-        $crtScreen[$col,$row] = "."
+        $crtScreen[$col, $row] = "."
     }
 }
 
@@ -43,7 +43,7 @@ Function CheckCycle1([Int64]$cycles, [Int64]$register) {
 
     $sigStr = 0
 
-    switch($cycles) {
+    switch ($cycles) {
         20 {
             $sigStr = 20 * $register
             $sum = $sum + $sigStr
@@ -108,7 +108,7 @@ Function CheckCycle2([Int64]$cycles, [Int64]$register) {
 
 Function Debug-Screen($screen) {
     $iter = 0;
-    foreach($row in $screen) {
+    foreach ($row in $screen) {
         $iter = $iter + 1
         Write-Host $row -NoNewline
         if ($iter -eq 40) {
@@ -161,6 +161,15 @@ Function PartTwo {
 
     $_cycles = 0
     $_register = 1
+
+    $currentRow = 0
+    $currentCol = 0
+
+    for ($col = 0; $col -lt 6; $col++) {
+        for ($row = 0; $row -lt 40; $row++) {
+            $crtScreen[$col, $row] = "."
+        }
+    }
 
     Write-Host "crt screen"
 
