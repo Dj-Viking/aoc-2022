@@ -165,12 +165,6 @@ Function PartTwo {
     $currentRow = 0
     $currentCol = 0
 
-    for ($col = 0; $col -lt 6; $col++) {
-        for ($row = 0; $row -lt 40; $row++) {
-            $crtScreen[$col, $row] = "."
-        }
-    }
-
     Write-Host "crt screen"
 
     Debug-Screen $crtScreen
