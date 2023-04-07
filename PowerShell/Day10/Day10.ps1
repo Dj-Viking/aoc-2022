@@ -20,7 +20,7 @@ Function CheckCycle1([Int64]$cycles, [Int64]$register) {
 
     $sigStr = 0
 
-    switch($cycles) {
+    switch ($cycles) {
         20 {
             $sigStr = 20 * $register
             $sum = $sum + $sigStr
@@ -55,29 +55,29 @@ Function CheckCycle1([Int64]$cycles, [Int64]$register) {
 }
 
 Function Check-Cycle2([Int64]$cycles, [Int64]$register, $screen, $currentRow, $currentCol) {
-    if ($cycles -gt 0 && $cycles -lt 41) {
+    if ($cycles -gt 0 -and $cycles -lt 41) {
 
     }
-    elseif ($cycles -gt 41 && $cycles -lt 81) {
+    elseif ($cycles -gt 41 -and $cycles -lt 81) {
 
     }
-    elseif ($cycles -gt 81 && $cycles -lt 121) {
+    elseif ($cycles -gt 81 -and $cycles -lt 121) {
 
     }
-    elseif ($cycles -gt 121 && $cycles -lt 161) {
+    elseif ($cycles -gt 121 -and $cycles -lt 161) {
 
     }
-    elseif ($cycles -gt 161 && $cycles -lt 201) {
+    elseif ($cycles -gt 161 -and $cycles -lt 201) {
 
     }
-    elseif ($cycles -gt 201 && $cycles -lt 241) {
+    elseif ($cycles -gt 201 -and $cycles -lt 241) {
 
     }
 }
 
 Function Debug-Screen($screen) {
     $iter = 0;
-    foreach($row in $screen) {
+    foreach ($row in $screen) {
         $iter = $iter + 1
         Write-Host $row -NoNewline
         if ($iter -eq 40) {
@@ -135,7 +135,7 @@ Function PartTwo {
 
     for ($col = 0; $col -lt 6; $col++) {
         for ($row = 0; $row -lt 40; $row++) {
-            $crtScreen[$col,$row] = "."
+            $crtScreen[$col, $row] = "."
         }
     }
 
