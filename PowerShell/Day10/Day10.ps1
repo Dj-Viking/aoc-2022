@@ -53,7 +53,6 @@ for ($col = 0; $col -lt 6; $col++) {
 }
 
 [Int64]$currentRow = 0
-[Int64]$currentCol = 0
 
 Function CheckCycle1([Int64]$cycles, [Int64]$register1) {
 
@@ -242,9 +241,6 @@ Function PartTwo {
     $_cycles = 0
     $_register = 1
 
-    $currentRow = 0
-    $currentCol = 0
-
     Write-Host "crt screen"
 
     Debug-Screen $crtScreen
@@ -256,7 +252,6 @@ Function PartTwo {
 
         if ($instruction -eq "noop") {
             $_cycles = $_cycles + 1
-            $currentCol = $currentCol + 1
 
             CheckCycle2 $_cycles $_register #draw a pixel if sprite is located on the screen in the current cycle ( column )
 
@@ -266,7 +261,6 @@ Function PartTwo {
             
             for ($i = 0; $i -lt 2; $i++) {
                 $_cycles = $_cycles + 1
-                $currentCol = $currentCol + 1
  
                 CheckCycle2 $_cycles $_register #draw a pixel if sprite is located on the screen in the current cycle ( column )
                 
