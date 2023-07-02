@@ -20,6 +20,12 @@ $myInput = Read-Input $InputFilename $PSScriptRoot
 # initialize the monkey stuff
 # read from input files to allocate the monkeys and their items
 
+class Me {
+    [System.Int64]$Worry = 0
+}
+
+[Me]$Me = [Me]::new();
+
 class Monkey {
     [System.Int16]$Id
     [System.String]$Items
@@ -61,13 +67,68 @@ class Monkey {
         Write-Host "[DEBUG MONKEY]: test false: $($this.TestFalse)" -ForegroundColor Yellow
         Write-Host "[DEBUG MONKEY]: test true: $($this.TestTrue)" -ForegroundColor Yellow
     }
+
+    [System.Void]DivideMyWorryAfterInspect(
+        [Me]$meRef
+    ) {
+        $meRef.Worry = $meRef.Worry / 3;
+    }
+
+    [System.Void]SetMyWorryDuringInspect(
+        [Me]$meRef, 
+        [System.String]$monkeyID,
+        [System.String]$item,
+        [System.Collections.ArrayList]$monkeyList
+    ) {
+
+        [Monkey]$mky = $monkeyList[$monkeyID];
+        $meRef.Worry = [System.Int64]$item;
+        # perform math operation based on the monkey's operation
+        [System.Array]$splitExpressionStr = $mky.Operation.Split(" = ", [System.StringSplitOptions]::RemoveEmptyEntries).Trim();
+        [System.String]$operator = $splitExpressionStr[2];
+
+        switch ($operator) {
+            "+" {
+                $meRef.Worry = $meRef.Worry + $(if ($splitExpressionStr[3] -cmatch "old") {
+                        $meRef.Worry
+                    }
+                    else {
+                        [System.Int64]$splitExpressionStr[3]
+                    });
+            }
+            "-" {
+                $meRef.Worry = $meRef.Worry - $(if ($splitExpressionStr[3] -cmatch "old") {
+                        $meRef.Worry
+                    }
+                    else {
+                        [System.Int64]$splitExpressionStr[3]
+                    });
+            }
+            "*" {
+                $meRef.Worry = $meRef.Worry * $(if ($splitExpressionStr[3] -cmatch "old") {
+                        $meRef.Worry
+                    }
+                    else {
+                        [System.Int64]$splitExpressionStr[3]
+                    });
+            }
+            "/" {
+                $meRef.Worry = $meRef.Worry / $(if ($splitExpressionStr[3] -cmatch "old") {
+                        $meRef.Worry
+                    }
+                    else {
+                        [System.Int64]$splitExpressionStr[3]
+                    });
+            }
+        }
+    }
 }
 
 $monkeyIndex = 0;
 
 for ($line = 0; $line -lt $lines.Length; $line++) {
 
-    $monkey = [Monkey]::new();
+    [Monkey]$monkey = [Monkey]::new();
 
     [System.String]$startingItemsStr = "";
     [System.String]$operationStr = "";
@@ -119,8 +180,12 @@ Function PartOne {
 
     }
 
-    Function ProceedRound() {
+    Function ProceedRound([Monkey]$mky) {
 
+    }
+
+    foreach ($monkey in $MonkeyList) {
+        ProceedRound $monkey
     }
 
     Write-Host "[INFO]: solving part one..." -ForegroundColor Cyan
@@ -145,7 +210,8 @@ Monkey 0:
 
 <#
 steps:
-    monkey inspect
+    monkey inspect 79
+    worry is calculated during inspect by the operation new = 79 * factor
     worry divided after inspection
         by 3 and rounded to nearest integer number 
     monkey test
