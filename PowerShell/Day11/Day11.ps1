@@ -39,7 +39,9 @@ for ($line = 0; $line -lt $lines.Length; $line++) {
         
         $monkey."index" = $monkeyIndex;
 
-        $monkey."operation" = $operationStr.Trim();
+        $monkey."operation" = $operationStr.Split(":")[1] | ForEach-Object {
+            $_.Trim()
+        }
 
         $monkey."testTrue" = $testTrue.Trim()
         $monkey."testFalse" = $testTrue.Trim()
