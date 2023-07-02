@@ -13,12 +13,58 @@ param(
 
 
 $myInput = Read-Input $InputFilename $PSScriptRoot
-$lines = Get-InputLines $myInput
+[System.Array]$lines = Get-InputLines $myInput
+
+[System.Collections.ArrayList]$MonkeyList = @();
+
+# initialize the monkey stuff
+# read from input files to allocate the monkeys and their items
+
+$monkeyIndex = 0;
+
+for ($line = 0; $line -lt $lines.Length; $line++) {
+    $monkey = @{};
+    [System.String]$startingItemsStr = "";
+    [System.String]$operationStr = "";
+    [System.String]$testStr = "";
+    [System.String]$testTrue = "";
+    [System.String]$testFalse = "";
+
+    if ($lines[$line] -cmatch "Monkey") {
+        $startingItemsStr = $lines[$line + 1];
+        $operationStr = $lines[$line + 2];
+        $testStr = $lines[$line + 3];
+        $testTrue = $lines[$line + 4];
+        $testFalse = $lines[$line + 5];
+        
+        $monkey."index" = $monkeyIndex;
+
+        $monkey."operation" = $operationStr.Trim();
+
+        $monkey."testTrue" = $testTrue.Trim()
+        $monkey."testFalse" = $testTrue.Trim()
+
+        $monkey."items" = $startingItemsStr.Split(":")[1] | ForEach-Object {
+            $_.Replace(" ", "");
+        }
+
+        $MonkeyList.Add($monkey) | Out-Null
+
+        $monkeyIndex++
+    }
+    else {
+        continue;
+    }
+}
+
+foreach ($monkey in $MonkeyList) {
+    Write-Host "[DEBUG]: look at monkey $($monkey."index") above: $(foreach($key in $monkey.Keys) { 
+        Write-Host "key => $($key): value => $($monkey[$key])" -ForegroundColor Green
+    })" -ForegroundColor Yellow
+}
 
 Function PartOne {
 
-    [System.Collections.ArrayList]$MonkeyList = @();
-    [System.Collections.ArrayList]$MonkeyItems = @();
 
     Function MonkeyInspect() {
 
@@ -29,6 +75,10 @@ Function PartOne {
     }
 
     Function MonkeyTest() {
+
+    }
+
+    Function ProceedRound() {
 
     }
 
