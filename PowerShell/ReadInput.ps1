@@ -1,7 +1,7 @@
-[String]$env:input = ""
-
-Function Read-Input([String]$type) {
-    $env:input = Get-Content -Path ".\$type.txt" -Raw
+Function Read-Input([String]$Filename, [String]$CallRoot) {
+    [String]$inputDocument = ""
+    Write-Host "[DEBUG]: what is input filename => $Filename" -ForegroundColor Yellow
+    $inputDocument = Get-Content -Path "$CallRoot\$Filename.txt" -Raw
     
-    return $env:input
+    return $inputDocument
 }

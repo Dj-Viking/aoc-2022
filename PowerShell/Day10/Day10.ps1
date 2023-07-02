@@ -1,12 +1,18 @@
+param(
+    [Parameter(Mandatory = $true, HelpMessage = "please enter an input file name - e.g. input or sample")]
+    [System.String]$InputFilename
+)
 
 [String]$answer1 = "answer goes here"
 [String]$myInput = ""
 [String[]]$lines = @()
 
-. ..\ReadInput.ps1
-. ..\ParseLines.ps1
+Write-Host "what is psscript root $PSScriptRoot" -ForegroundColor Yellow
 
-$myInput = Read-Input $args[1]
+. $PSScriptRoot\..\ReadInput.ps1
+. $PSScriptRoot\..\ParseLines.ps1
+
+$myInput = Read-Input $InputFilename $PSScriptRoot
 $lines = Get-InputLines $myInput
 
 [Int64]$register = 1
@@ -20,7 +26,7 @@ $lines = Get-InputLines $myInput
 [System.Collections.ArrayList]$spriteVisibilityList = @()
 
 for ($i = 1; $i -lt 241; $i++) {
-    $spriteVisibilityList.Add("$($i),$($i + 1),$($i + 2)");
+    $spriteVisibilityList.Add("$($i),$($i + 1),$($i + 2)") | Out-Null
 }
 
 $spriteVisibilityList[38] = "39,40";
@@ -62,32 +68,32 @@ Function CheckCycle1([Int64]$cycles, [Int64]$register1) {
         20 {
             $sigStr = 20 * $register1
             $sum = $sum + $sigStr
-            $sums.Add($sum)
+            $sums.Add($sum) | Out-Null
         }
         60 {
             $sigStr = 60 * $register1
             $sum = $sum + $sigStr
-            $sums.Add($sum)
+            $sums.Add($sum) | Out-Null
         }
         100 {
             $sigStr = 100 * $register1
             $sum = $sum + $sigStr
-            $sums.Add($sum)
+            $sums.Add($sum) | Out-Null
         }
         140 {
             $sigStr = 140 * $register1
             $sum = $sum + $sigStr
-            $sums.Add($sum)
+            $sums.Add($sum) | Out-Null
         }
         180 {
             $sigStr = 180 * $register1
             $sum = $sum + $sigStr
-            $sums.Add($sum)
+            $sums.Add($sum) | Out-Null
         }
         220 {
             $sigStr = 220 * $register1
             $sum = $sum + $sigStr
-            $sums.Add($sum)
+            $sums.Add($sum) | Out-Null
         }
     }
 }
@@ -101,10 +107,10 @@ Function CheckCycle2([Int64]$cycles, [Int64]$register2) {
     [System.Int64]$spritePixelThree = $null
 
     if ($null -ne $spriteVisibilityList[$register2 - 1].Split(",")[0]) {
-        $spritePixelOne   = [Int64]$spriteVisibilityList[$register2 - 1].Split(",")[0]
+        $spritePixelOne = [Int64]$spriteVisibilityList[$register2 - 1].Split(",")[0]
     }
     if ($null -ne $spriteVisibilityList[$register2 - 1].Split(",")[1]) {
-        $spritePixelTwo   = [Int64]$spriteVisibilityList[$register2 - 1].Split(",")[1]
+        $spritePixelTwo = [Int64]$spriteVisibilityList[$register2 - 1].Split(",")[1]
     }
     if ($null -ne $spriteVisibilityList[$register2 - 1].Split(",")[1]) {
         $spritePixelThree = [Int64]$spriteVisibilityList[$register2 - 1].Split(",")[2]
@@ -128,7 +134,7 @@ Function CheckCycle2([Int64]$cycles, [Int64]$register2) {
         if ($isPixelLocatedAtRegisterDuringCycle) {
             #draw!
             # Write-Host "Draw!" -ForegroundColor Magenta
-            $crtScreen[$currentRow,($cycles - 1)] = "#";
+            $crtScreen[$currentRow, ($cycles - 1)] = "#";
         }   
     }
     elseif ($cycles -ge 41 -and $cycles -le 80) {
@@ -138,7 +144,7 @@ Function CheckCycle2([Int64]$cycles, [Int64]$register2) {
         if ($isPixelLocatedAtRegisterDuringCycle) {
             #draw!
             # Write-Host "Draw!" -ForegroundColor Magenta
-            $crtScreen[$currentRow,($cycles - 41)] = "#";
+            $crtScreen[$currentRow, ($cycles - 41)] = "#";
         }
     }
     elseif ($cycles -ge 81 -and $cycles -le 120) {
@@ -148,7 +154,7 @@ Function CheckCycle2([Int64]$cycles, [Int64]$register2) {
         if ($isPixelLocatedAtRegisterDuringCycle) {
             #draw!
             # Write-Host "Draw!" -ForegroundColor Magenta
-            $crtScreen[$currentRow,($cycles - 81)] = "#";
+            $crtScreen[$currentRow, ($cycles - 81)] = "#";
         }
     }
     elseif ($cycles -ge 121 -and $cycles -le 160) {
@@ -158,7 +164,7 @@ Function CheckCycle2([Int64]$cycles, [Int64]$register2) {
         if ($isPixelLocatedAtRegisterDuringCycle) {
             #draw!
             # Write-Host "Draw!" -ForegroundColor Magenta
-            $crtScreen[$currentRow,($cycles - 121)] = "#";
+            $crtScreen[$currentRow, ($cycles - 121)] = "#";
         }
     }
     elseif ($cycles -ge 161 -and $cycles -le 200) {
@@ -168,7 +174,7 @@ Function CheckCycle2([Int64]$cycles, [Int64]$register2) {
         if ($isPixelLocatedAtRegisterDuringCycle) {
             #draw!
             # Write-Host "Draw!" -ForegroundColor Magenta
-            $crtScreen[$currentRow,($cycles - 161)] = "#";
+            $crtScreen[$currentRow, ($cycles - 161)] = "#";
         }
     }
     elseif ($cycles -ge 201 -and $cycles -le 240) {
@@ -178,7 +184,7 @@ Function CheckCycle2([Int64]$cycles, [Int64]$register2) {
         if ($isPixelLocatedAtRegisterDuringCycle) {
             #draw!
             # Write-Host "Draw!" -ForegroundColor Magenta
-            $crtScreen[$currentRow,($cycles - 201)] = "#";
+            $crtScreen[$currentRow, ($cycles - 201)] = "#";
         }
     }
 }
@@ -264,7 +270,8 @@ Function PartTwo {
  
                 CheckCycle2 $_cycles $_register #draw a pixel if sprite is located on the screen in the current cycle ( column )
                 
-                if ($i -eq 1) { # shift the register
+                if ($i -eq 1) {
+                    # shift the register
                     $_register = $_register + [Int]$value
                 }
 
