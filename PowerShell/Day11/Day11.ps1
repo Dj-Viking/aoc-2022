@@ -20,10 +20,55 @@ $myInput = Read-Input $InputFilename $PSScriptRoot
 # initialize the monkey stuff
 # read from input files to allocate the monkeys and their items
 
+class Monkey {
+    [System.Int16]$Id
+    [System.String]$Items
+    [System.String]$Operation
+    [System.String]$Test
+    [System.String]$TestTrue
+    [System.String]$TestFalse
+
+    [System.Void]Init(
+        [System.Int16]$id, 
+        [System.String]$items, 
+        [System.String]$operation,
+        [System.String]$test,
+        [System.String]$testTrue, 
+        [System.String]$testFalse
+    ) {
+        $this.Id = $id;
+
+        $this.Items = $items.Split(":")[1] | ForEach-Object {
+            $_.Replace(" ", "").Trim();
+        };
+
+        $this.Operation = $operation.Split(":")[1] | ForEach-Object {
+            $_.Trim()
+        };
+
+        $this.Test = $test.Split(":")[1].Trim();
+
+        $this.TestFalse = $testFalse.Split(":")[1].Trim();
+
+        $this.TestTrue = $testTrue.Split(":")[1].Trim();
+    }
+     
+    [System.Void]Debug() {
+        Write-Host "[DEBUG MONKEY]: Debugging monkey $($this.Id)" -ForegroundColor Yellow
+        Write-Host "[DEBUG MONKEY]: items: $($this.Items)" -ForegroundColor Yellow
+        Write-Host "[DEBUG MONKEY]: operation: $($this.Operation)" -ForegroundColor Yellow
+        Write-Host "[DEBUG MONKEY]: test: $($this.Test)" -ForegroundColor Yellow
+        Write-Host "[DEBUG MONKEY]: test false: $($this.TestFalse)" -ForegroundColor Yellow
+        Write-Host "[DEBUG MONKEY]: test true: $($this.TestTrue)" -ForegroundColor Yellow
+    }
+}
+
 $monkeyIndex = 0;
 
 for ($line = 0; $line -lt $lines.Length; $line++) {
-    $monkey = @{};
+
+    $monkey = [Monkey]::new();
+
     [System.String]$startingItemsStr = "";
     [System.String]$operationStr = "";
     [System.String]$testStr = "";
@@ -37,18 +82,14 @@ for ($line = 0; $line -lt $lines.Length; $line++) {
         $testTrue = $lines[$line + 4];
         $testFalse = $lines[$line + 5];
         
-        $monkey."index" = $monkeyIndex;
-
-        $monkey."operation" = $operationStr.Split(":")[1] | ForEach-Object {
-            $_.Trim()
-        }
-
-        $monkey."testTrue" = $testTrue.Trim()
-        $monkey."testFalse" = $testTrue.Trim()
-
-        $monkey."items" = $startingItemsStr.Split(":")[1] | ForEach-Object {
-            $_.Replace(" ", "");
-        }
+        $monkey.Init(
+            $monkeyIndex, 
+            $startingItemsStr, 
+            $operationStr,
+            $testStr,
+            $testTrue,
+            $testFalse
+        );
 
         $MonkeyList.Add($monkey) | Out-Null
 
@@ -60,9 +101,7 @@ for ($line = 0; $line -lt $lines.Length; $line++) {
 }
 
 foreach ($monkey in $MonkeyList) {
-    Write-Host "[DEBUG]: look at monkey $($monkey."index") above: $(foreach($key in $monkey.Keys) { 
-        Write-Host "key => $($key): value => $($monkey[$key])" -ForegroundColor Green
-    })" -ForegroundColor Yellow
+    $monkey.Debug();
 }
 
 Function PartOne {
