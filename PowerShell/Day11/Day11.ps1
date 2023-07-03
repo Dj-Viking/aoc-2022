@@ -16,7 +16,7 @@ $myInput = Read-Input $InputFilename $PSScriptRoot
 [System.Array]$lines = Get-InputLines $myInput
 
 class Me {
-    $Worry = 0
+    [bigint]$Worry = 0
 }
 
 class Monkey {
@@ -46,7 +46,7 @@ class Monkey {
 
 
         foreach ($numStr in $itemsStr.Split(" ")) {
-            [bigint]$num = [bigint]$numStr;            
+            $num = [System.Double]$numStr;            
             $this.Items.Add($num) | Out-Null;
         }
 
@@ -127,19 +127,11 @@ class Monkey {
 
         switch ($operator) {
             "+" {
-                $meRef.Worry = $meRef.Worry + $(if ($splitExpressionStr[3] -cmatch "old") {
-                        $meRef.Worry
+                $meRef.Worry = [bigint]::Parse($meRef.Worry.ToString()) + $(if ($splitExpressionStr[3] -cmatch "old") {
+                        [bigint]::Parse($meRef.Worry.ToString());
                     }
                     else {
-                        [bigint]$splitExpressionStr[3]
-                    });
-            }
-            "-" {
-                $meRef.Worry = $meRef.Worry - $(if ($splitExpressionStr[3] -cmatch "old") {
-                        $meRef.Worry
-                    }
-                    else {
-                        [bigint]$splitExpressionStr[3]
+                        [bigint]::Parse($splitExpressionStr[3].ToString());
                     });
             }
             "*" {
@@ -147,15 +139,7 @@ class Monkey {
                         $meRef.Worry
                     }
                     else {
-                        [bigint]$splitExpressionStr[3]
-                    });
-            }
-            "/" {
-                $meRef.Worry = $meRef.Worry / $(if ($splitExpressionStr[3] -cmatch "old") {
-                        $meRef.Worry
-                    }
-                    else {
-                        [bigint]$splitExpressionStr[3]
+                        [bigint]::Parse($splitExpressionStr[3].ToString());
                     });
             }
         }
