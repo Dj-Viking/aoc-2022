@@ -106,9 +106,19 @@ class Monkey {
         }
     }
 
-    [System.Boolean]TestWorryIsDivisible([Me]$me, $divisor) {
-        [System.Boolean]$result = $me.Worry % $divisor -eq 0;
-        return $result;
+    [System.Boolean]TestWorryIsDivisible([Me]$me, $divisor, [System.Boolean]$isPartTwo) {
+        $res = $null;
+        if ($isPartTwo) {
+            [System.Boolean]$res = [bigint]::Remainder(
+                [bigint]::Parse($me.Worry.ToString()), 
+                [bigint]::Parse($divisor.ToString())
+            ) -eq 0;
+        }
+        else {
+            [System.Boolean]$res = $me.Worry % $divisor -eq 0;
+
+        }
+        return $res;
     }
 
     [System.Void]SetMyWorryDuringInspect(
@@ -127,20 +137,23 @@ class Monkey {
 
         switch ($operator) {
             "+" {
-                $meRef.Worry = [bigint]::Parse($meRef.Worry.ToString()) + $(if ($splitExpressionStr[3] -cmatch "old") {
-                        [bigint]::Parse($meRef.Worry.ToString());
-                    }
-                    else {
-                        [bigint]::Parse($splitExpressionStr[3].ToString());
-                    });
+                $meRef.Worry = [bigint]::Add([bigint]::Parse($meRef.Worry.ToString()), $(if ($splitExpressionStr[3] -cmatch "old") {
+                            [bigint]::Parse($meRef.Worry.ToString());
+                        }
+                        else {
+                            [bigint]::Parse($splitExpressionStr[3].ToString());
+                        }));
+                        
+                break;
             }
             "*" {
-                $meRef.Worry = $meRef.Worry * $(if ($splitExpressionStr[3] -cmatch "old") {
-                        $meRef.Worry
-                    }
-                    else {
-                        [bigint]::Parse($splitExpressionStr[3].ToString());
-                    });
+                $meRef.Worry = [bigint]::Multiply([bigint]::Parse($meRef.Worry.ToString()), $(if ($splitExpressionStr[3] -cmatch "old") {
+                            [bigint]::Parse($meRef.Worry.ToString());
+                        }
+                        else {
+                            [bigint]::Parse($splitExpressionStr[3].ToString());
+                        }));
+                break;
             }
         }
     }
@@ -174,8 +187,9 @@ Function ProceedTurn([Monkey]$mky, [Me]$me, [System.Collections.ArrayList]$monke
             [System.StringSplitOptions]::RemoveEmptyEntries
         )[0].Trim();
         
-        [System.Boolean]$testResult = $mky.TestWorryIsDivisible($me, $divisor);
+        [System.Boolean]$testResult = $mky.TestWorryIsDivisible($me, $divisor, $isPartTwo);
         
+        # Write-Host "[DEBUG]: worry $($me.Worry) is divisible => $testResult" -ForegroundColor Cyan
         # Write-Host "[DEBUG]: worry is divisible => $testResult" -ForegroundColor Yellow
         
         # perform true or false action after test assertion
