@@ -15,28 +15,21 @@ param(
 $myInput = Read-Input $InputFilename $PSScriptRoot
 [System.Array]$lines = Get-InputLines $myInput
 
-[System.Collections.ArrayList]$MonkeyList = @();
-
-# initialize the monkey stuff
-# read from input files to allocate the monkeys and their items
-
 class Me {
-    [System.Int64]$Worry = 0
+    $Worry = 0
 }
 
-[Me]$Me = [Me]::new();
-
 class Monkey {
-    [System.Int16]$Id
+    $Id
     [System.Collections.ArrayList]$Items = @()
     [System.String]$Operation
     [System.String]$Test
     [System.String]$TestTrue
     [System.String]$TestFalse
-    [System.Int64]$InspectCounter = 0
+    $InspectCounter = 0
 
     [System.Void]Init(
-        [System.Int16]$id, 
+        $id, 
         [System.String]$items, 
         [System.String]$operation,
         [System.String]$test,
@@ -53,7 +46,7 @@ class Monkey {
 
 
         foreach ($numStr in $itemsStr.Split(" ")) {
-            [System.Int64]$num = [System.Int64]$numStr;            
+            [bigint]$num = [bigint]$numStr;            
             $this.Items.Add($num) | Out-Null;
         }
 
@@ -73,7 +66,7 @@ class Monkey {
     }
 
     static [System.Void]DebugMonkeyById(
-        [System.Int16]$mkyId, 
+        $mkyId, 
         [System.Collections.ArrayList]$monkeyList
     ) {
         [Monkey]$mky = $monkeyList[$mkyId];
@@ -100,12 +93,20 @@ class Monkey {
     }
 
     [System.Void]DivideMyWorryAfterInspect(
-        [Me]$meRef
+        [Me]$meRef,
+        [System.Boolean]$isPartTwo
     ) {
-        $meRef.Worry = Get-RoundedDownNumber($meRef.Worry / 3);
+        if ($isPartTwo) {
+            # don't divide by three anymore
+            # $meRef.Worry = Get-RoundedDownNumber($meRef.Worry);
+            # do nothing
+        }
+        else {
+            $meRef.Worry = Get-RoundedDownNumber($meRef.Worry / 3);
+        }
     }
 
-    [System.Boolean]TestWorryIsDivisible([Me]$me, [System.Int64]$divisor) {
+    [System.Boolean]TestWorryIsDivisible([Me]$me, $divisor) {
         [System.Boolean]$result = $me.Worry % $divisor -eq 0;
         return $result;
     }
@@ -113,7 +114,7 @@ class Monkey {
     [System.Void]SetMyWorryDuringInspect(
         [Me]$meRef, 
         [System.String]$monkeyID,
-        [System.Int64]$item,
+        [bigint]$item,
         [System.Collections.ArrayList]$monkeyList
     ) {
 
@@ -130,7 +131,7 @@ class Monkey {
                         $meRef.Worry
                     }
                     else {
-                        [System.Int64]$splitExpressionStr[3]
+                        [bigint]$splitExpressionStr[3]
                     });
             }
             "-" {
@@ -138,7 +139,7 @@ class Monkey {
                         $meRef.Worry
                     }
                     else {
-                        [System.Int64]$splitExpressionStr[3]
+                        [bigint]$splitExpressionStr[3]
                     });
             }
             "*" {
@@ -146,7 +147,7 @@ class Monkey {
                         $meRef.Worry
                     }
                     else {
-                        [System.Int64]$splitExpressionStr[3]
+                        [bigint]$splitExpressionStr[3]
                     });
             }
             "/" {
@@ -154,137 +155,147 @@ class Monkey {
                         $meRef.Worry
                     }
                     else {
-                        [System.Int64]$splitExpressionStr[3]
+                        [bigint]$splitExpressionStr[3]
                     });
             }
         }
     }
 }
 
-[System.Int16]$monkeyIndex = 0;
-
-for ($line = 0; $line -lt $lines.Length; $line++) {
-
-    [Monkey]$monkey = [Monkey]::new();
-
-    [System.String]$startingItemsStr = "";
-    [System.String]$operationStr = "";
-    [System.String]$testStr = "";
-    [System.String]$testTrue = "";
-    [System.String]$testFalse = "";
-
-    if ($lines[$line] -cmatch "Monkey") {
-        $startingItemsStr = $lines[$line + 1];
-        $operationStr = $lines[$line + 2];
-        $testStr = $lines[$line + 3];
-        $testTrue = $lines[$line + 4];
-        $testFalse = $lines[$line + 5];
-        
-        $monkey.Init(
-            $monkeyIndex, 
-            $startingItemsStr, 
-            $operationStr,
-            $testStr,
-            $testTrue,
-            $testFalse
-        );
-
-        $MonkeyList.Add($monkey) | Out-Null;
-
-        $monkeyIndex++;
-    }
-    else {
-        continue;
-    }
+foreach ($monkey in $MonkeyList) {
+    # $monkey.Debug();
 }
 
-foreach ($monkey in $MonkeyList) {
-    $monkey.Debug();
+Function ProceedTurn([Monkey]$mky, [Me]$me, [System.Collections.ArrayList]$monkeyList, [System.Boolean]$isPartTwo) {
+    #inspect
+    [System.UInt64]$itemsCount = $mky.Items.Count;
+
+    while ($itemsCount -ne 0) {
+
+        $currentItem = $mky.Items[0];
+        
+        #update worry level based on item's level
+        $mky.IncrementInspect();
+        $mky.SetMyWorryDuringInspect($me, $mky.Id, $currentItem, $monkeyList);
+        # Write-Host "[DEBUG]: what is my worry now $($Me.Worry)" -ForegroundColor Yellow
+        
+        #divide worry
+        $mky.DivideMyWorryAfterInspect($me, $isPartTwo);
+        # Write-Host "[DEBUG]: what is my worry now after divide $($Me.Worry)" -ForegroundColor Yellow
+        
+        #test
+        
+        $divisor = $mky.Test.Split(
+            "test: divisible by", 
+            [System.StringSplitOptions]::RemoveEmptyEntries
+        )[0].Trim();
+        
+        [System.Boolean]$testResult = $mky.TestWorryIsDivisible($me, $divisor);
+        
+        # Write-Host "[DEBUG]: worry is divisible => $testResult" -ForegroundColor Yellow
+        
+        # perform true or false action after test assertion
+        # remove from current monkey id and throw (item with new worry level) to monkey with id from the test action
+        if ($testResult) {
+            # Write-Host "[INFO]: test result true THROW" -ForegroundColor Green
+            # true action
+            
+            # remove from current monkey
+            [Monkey]$currentMonkey = $monkeyList[$mky.Id]
+            $currentMonkey.Items.Remove($currentItem);
+            $itemsCount--;
+
+            #get the monkey to throw to
+            $monkeyIdToThrowTo = $mky.TestTrue.Split(
+                "throw to monkey ",
+                [System.StringSplitOptions]::RemoveEmptyEntries
+            )[0].Trim();
+                
+            $monkeyList[$monkeyIdToThrowTo].Items.Add($me.Worry) | Out-Null
+                
+            # [Monkey]::DebugMonkeyById($mky.Id, $MonkeyList);
+            # [Monkey]::DebugMonkeyById($monkeyIdToThrowTo, $MonkeyList);
+        }
+        else {
+            # Write-Host "[INFO]: test result false THROW" -ForegroundColor Green
+            # false action
+            # remove from current monkey
+            $monkeyList[$mky.Id].Items.Remove($currentItem);
+            $itemsCount--;
+            
+            #get the monkey to throw to
+            $monkeyIdToThrowTo = $mky.TestFalse.Split(
+                "throw to monkey ",
+                [System.StringSplitOptions]::RemoveEmptyEntries
+            )[0].Trim();
+
+            $monkeyList[$monkeyIdToThrowTo].Items.Add($me.Worry) | Out-Null;
+            
+            # [Monkey]::DebugMonkeyById($mky.Id, $MonkeyList);
+            # [Monkey]::DebugMonkeyById($monkeyIdToThrowTo, $MonkeyList);
+        }
+    }
 }
 
 Function PartOne {
 
-    Function ProceedTurn([Monkey]$mky) {
-        #inspect
-        [System.Int64]$itemsCount = $mky.Items.Count;
+    [Me]$Me = [Me]::new();
 
-        while ($itemsCount -ne 0) {
+    # initialize the monkey stuff
+    # read from input files to allocate the monkeys and their items
+    [System.Collections.ArrayList]$MonkeyList = @();
 
-            [System.Int64]$currentItem = $mky.Items[0];
-            
-            #update worry level based on item's level
-            $mky.IncrementInspect();
-            $mky.SetMyWorryDuringInspect($Me, $mky.Id, $currentItem, $MonkeyList);
-            Write-Host "[DEBUG]: what is my worry now $($Me.Worry)" -ForegroundColor Yellow
-            
-            #divide worry
-            $mky.DivideMyWorryAfterInspect($Me);
-            Write-Host "[DEBUG]: what is my worry now after divide $($Me.Worry)" -ForegroundColor Yellow
-            
-            #test
-            
-            [System.Int16]$divisor = $mky.Test.Split(
-                "test: divisible by", 
-                [System.StringSplitOptions]::RemoveEmptyEntries
-            )[0].Trim();
-            
-            [System.Boolean]$testResult = $mky.TestWorryIsDivisible($Me, $divisor);
-            
-            Write-Host "[DEBUG]: worry is divisible => $testResult" -ForegroundColor Yellow
-            
-            # perform true or false action after test assertion
-            # remove from current monkey id and throw (item with new worry level) to monkey with id from the test action
-            if ($testResult) {
-                Write-Host "[INFO]: test result true THROW" -ForegroundColor Green
-                # true action
-                
-                # remove from current monkey
-                [Monkey]$currentMonkey = $MonkeyList[$mky.Id]
-                $currentMonkey.Items.Remove($currentItem);
-                $itemsCount--;
+    $monkeyIndex = 0;
 
-                #get the monkey to throw to
-                [System.Int16]$monkeyIdToThrowTo = [System.Int16]$mky.TestTrue.Split(
-                    "throw to monkey ",
-                    [System.StringSplitOptions]::RemoveEmptyEntries
-                )[0].Trim();
-                    
-                $MonkeyList[$monkeyIdToThrowTo].Items.Add($Me.Worry) | Out-Null
-                    
-                [Monkey]::DebugMonkeyById($mky.Id, $MonkeyList);
-                [Monkey]::DebugMonkeyById($monkeyIdToThrowTo, $MonkeyList);
-            }
-            else {
-                Write-Host "[INFO]: test result false THROW" -ForegroundColor Green
-                # false action
-                # remove from current monkey
-                $MonkeyList[$mky.Id].Items.Remove($currentItem);
-                $itemsCount--;
-                
-                #get the monkey to throw to
-                [System.Int16]$monkeyIdToThrowTo = [System.Int16]$mky.TestFalse.Split(
-                    "throw to monkey ",
-                    [System.StringSplitOptions]::RemoveEmptyEntries
-                )[0].Trim();
+    for ($line = 0; $line -lt $lines.Length; $line++) {
 
-                $MonkeyList[$monkeyIdToThrowTo].Items.Add($Me.Worry) | Out-Null;
-                
-                [Monkey]::DebugMonkeyById($mky.Id, $MonkeyList);
-                [Monkey]::DebugMonkeyById($monkeyIdToThrowTo, $MonkeyList);
-            }
+        [Monkey]$monkey = [Monkey]::new();
+
+        [System.String]$startingItemsStr = "";
+        [System.String]$operationStr = "";
+        [System.String]$testStr = "";
+        [System.String]$testTrue = "";
+        [System.String]$testFalse = "";
+
+        if ($lines[$line] -cmatch "Monkey") {
+            $startingItemsStr = $lines[$line + 1];
+            $operationStr = $lines[$line + 2];
+            $testStr = $lines[$line + 3];
+            $testTrue = $lines[$line + 4];
+            $testFalse = $lines[$line + 5];
+        
+            $monkey.Init(
+                $monkeyIndex, 
+                $startingItemsStr, 
+                $operationStr,
+                $testStr,
+                $testTrue,
+                $testFalse
+            );
+
+            $MonkeyList.Add($monkey) | Out-Null;
+
+            $monkeyIndex++;
+        }
+        else {
+            continue;
         }
     }
 
+    Write-Host "[INFO]: solving part one..." -ForegroundColor Cyan;
+
+
     for ($round = 0; $round -lt 20; $round++) {
-        # for ($round = 0; $round -lt 1; $round++) {
         foreach ($monkey in $MonkeyList) {
+
+            [Monkey]$mky = $monkey
         
-            ProceedTurn $monkey;
+            ProceedTurn $mky $Me $MonkeyList $false
          
-            Write-Host "[DEBUG AFTER TURN]" -ForegroundColor Green
-            foreach ($monkey in $MonkeyList) {
-                $monkey.Debug();
-            }
+            # Write-Host "[DEBUG AFTER TURN]" -ForegroundColor Green
+            # foreach ($monkey in $MonkeyList) {
+            #     $monkey.Debug();
+            # }
         
         }
     }
@@ -300,11 +311,82 @@ Function PartOne {
 
     $answer1 = $inspectionCountList[$inspectionCountList.Count - 1] * $inspectionCountList[$inspectionCountList.Count - 2];
 
-    Write-Host "[INFO]: solving part one..." -ForegroundColor Cyan;
     Write-Host "[INFO]: part one answer is $answer1" -ForegroundColor Green;
 }
 Function PartTwo {
+
+    [Me]$Me = [Me]::new();
+
+    # initialize the monkey stuff
+    # read from input files to allocate the monkeys and their items
+    [System.Collections.ArrayList]$MonkeyList = @();
+
+    $monkeyIndex = 0;
+
+    for ($line = 0; $line -lt $lines.Length; $line++) {
+
+        [Monkey]$monkey = [Monkey]::new();
+
+        [System.String]$startingItemsStr = "";
+        [System.String]$operationStr = "";
+        [System.String]$testStr = "";
+        [System.String]$testTrue = "";
+        [System.String]$testFalse = "";
+
+        if ($lines[$line] -cmatch "Monkey") {
+            $startingItemsStr = $lines[$line + 1];
+            $operationStr = $lines[$line + 2];
+            $testStr = $lines[$line + 3];
+            $testTrue = $lines[$line + 4];
+            $testFalse = $lines[$line + 5];
+        
+            $monkey.Init(
+                $monkeyIndex, 
+                $startingItemsStr, 
+                $operationStr,
+                $testStr,
+                $testTrue,
+                $testFalse
+            );
+
+            $MonkeyList.Add($monkey) | Out-Null;
+
+            $monkeyIndex++;
+        }
+        else {
+            continue;
+        }
+    }
+
     Write-Host "[INFO]: solving part two..." -ForegroundColor Cyan;
+
+
+    for ($round = 0; $round -lt 20; $round++) {
+        foreach ($monkey in $MonkeyList) {
+
+            [Monkey]$mky = $monkey
+        
+            ProceedTurn $mky $Me $MonkeyList $true
+         
+            # Write-Host "[DEBUG AFTER TURN]" -ForegroundColor Green
+            # foreach ($monkey in $MonkeyList) {
+            #     $monkey.Debug();
+            # }
+        
+        }
+    }
+
+    [System.Collections.ArrayList]$inspectionCountList = $MonkeyList | ForEach-Object {
+        [Monkey]$mky = $_;
+        $mky.InspectCounter;
+    }
+
+    $inspectionCountList.Sort();
+
+    Write-Host "inspect count list $($inspectionCountList)" -ForegroundColor Cyan
+
+    $answer2 = $inspectionCountList[$inspectionCountList.Count - 1] * $inspectionCountList[$inspectionCountList.Count - 2];
+
     Write-Host "[INFO]: part two answer is $answer2" -ForegroundColor Green;
 }
 

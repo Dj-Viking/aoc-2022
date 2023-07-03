@@ -7,5 +7,5 @@ Function Get-RoundedDownNumber([System.Decimal]$Number) {
     [System.Array]$splitstr = $numstr.Split(".");
     # Write-Host "[DEBUG]: number str => $splitstr is type $($splitstr.GetType())" -ForegroundColor Yellow
     # Write-Host "[DEBUG]: rounded down str => $($splitstr[0]) is type $(([System.Int64]$splitstr[0]).GetType())" -ForegroundColor Yellow
-    return [System.Int64]$splitstr[0];
+    return [System.UInt64]$splitstr[0];
 }
