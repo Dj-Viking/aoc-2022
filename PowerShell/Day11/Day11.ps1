@@ -17,7 +17,11 @@ $myInput = Read-Input $InputFilename $PSScriptRoot
 
 class Me {
     [bigint]$Worry = 0
+    [System.UInt64]$BigMod = 1
+    [System.UInt64]$ExprResult = 0
 }
+
+$global:IsPartTwo = $false;
 
 class Monkey {
     $Id
@@ -109,10 +113,11 @@ class Monkey {
     [System.Boolean]TestWorryIsDivisible([Me]$me, $divisor, [System.Boolean]$isPartTwo) {
         $res = $null;
         if ($isPartTwo) {
-            [System.Boolean]$res = [bigint]::Remainder(
-                [bigint]::Parse($me.Worry.ToString()), 
-                [bigint]::Parse($divisor.ToString())
-            ) -eq 0;
+            [System.Boolean]$res = [System.Int64]$me.ExprResult % [System.Int64]$divisor -eq 0;
+            # [System.Boolean]$res = [bigint]::Remainder(
+            #     [bigint]::Parse($me.ExprResult.ToString()),
+            #     [bigint]::Parse($divisor.ToString())
+            # ) -eq 0;
         }
         else {
             [System.Boolean]$res = $me.Worry % $divisor -eq 0;
@@ -129,7 +134,7 @@ class Monkey {
     ) {
 
         [Monkey]$mky = $monkeyList[$monkeyID];
-        $meRef.Worry = $item;
+        $meRef.Worry = [bigint]::Parse($item.ToString());
 
         # perform math operation based on the monkey's operation
         [System.Array]$splitExpressionStr = $mky.Operation.Split(" = ", [System.StringSplitOptions]::RemoveEmptyEntries).Trim();
@@ -137,22 +142,56 @@ class Monkey {
 
         switch ($operator) {
             "+" {
-                $meRef.Worry = [bigint]::Add([bigint]::Parse($meRef.Worry.ToString()), $(if ($splitExpressionStr[3] -cmatch "old") {
+                $meRef.Worry = [bigint]::Add(
+                    [bigint]::Parse($meRef.Worry.ToString()), 
+                    $(
+                        if ($splitExpressionStr[3] -cmatch "old") {
                             [bigint]::Parse($meRef.Worry.ToString());
                         }
                         else {
                             [bigint]::Parse($splitExpressionStr[3].ToString());
-                        }));
-                        
+                        }
+                    )
+                );
+
+                $meRef.ExprResult = [bigint]::Remainder(
+                    [bigint]::Parse($meRef.Worry.ToString()), 
+                    [bigint]::Parse($meRef.BigMod.ToString())
+                );
+
+                # if ($global:IsPartTwo) {
+                #     Write-Host "with big mod $($meRef.BigMod)" -ForegroundColor Cyan
+                #     Write-Host "has remainder $($meRef.ExprResult)" -ForegroundColor Green
+                #     Write-Host "with worry $($meRef.Worry)" -ForegroundColor Red
+                # }
+
                 break;
             }
             "*" {
-                $meRef.Worry = [bigint]::Multiply([bigint]::Parse($meRef.Worry.ToString()), $(if ($splitExpressionStr[3] -cmatch "old") {
+                $meRef.Worry = [bigint]::Multiply(
+                    [bigint]::Parse($meRef.Worry.ToString()),
+                    $(
+                        if ($splitExpressionStr[3] -cmatch "old") {
                             [bigint]::Parse($meRef.Worry.ToString());
                         }
                         else {
                             [bigint]::Parse($splitExpressionStr[3].ToString());
-                        }));
+                        }
+                    )
+                );
+
+                
+                $meRef.ExprResult = [bigint]::Remainder(
+                    [bigint]::Parse($meRef.Worry.ToString()), 
+                    [bigint]::Parse($meRef.BigMod.ToString())
+                );
+
+                # if ($global:IsPartTwo) {
+                #     Write-Host "with big mod $($meRef.BigMod)" -ForegroundColor Cyan
+                #     Write-Host "has remainder $($meRef.ExprResult)" -ForegroundColor Green
+                #     Write-Host "with worry $($meRef.Worry)" -ForegroundColor Red
+                # }
+                
                 break;
             }
         }
@@ -313,6 +352,8 @@ Function PartOne {
 }
 Function PartTwo {
 
+    $global:IsPartTwo = $true;
+
     [Me]$Me = [Me]::new();
 
     # initialize the monkey stuff
@@ -356,10 +397,24 @@ Function PartTwo {
         }
     }
 
+    # set up big mod for modular arithmetic
+    foreach ($monkey in $MonkeyList) {
+
+        $Me.BigMod *= $monkey.Test.Split(
+            "test: divisible by", 
+            [System.StringSplitOptions]::RemoveEmptyEntries
+        )[0].Trim();
+
+    }
+
+    # Write-Host "[DEBUG]: what is big mod $($Me.BigMod)" -ForegroundColor Yellow
+
     Write-Host "[INFO]: solving part two..." -ForegroundColor Cyan;
 
 
-    for ($round = 0; $round -lt 20; $round++) {
+    Write-Host "[DEBUG]: start part two time $((Get-Date).DateTime)" -ForegroundColor Yellow
+
+    for ($round = 0; $round -lt 10000; $round++) {
         foreach ($monkey in $MonkeyList) {
 
             [Monkey]$mky = $monkey
@@ -386,6 +441,9 @@ Function PartTwo {
     $answer2 = $inspectionCountList[$inspectionCountList.Count - 1] * $inspectionCountList[$inspectionCountList.Count - 2];
 
     Write-Host "[INFO]: part two answer is $answer2" -ForegroundColor Green;
+
+    Write-Host "[DEBUG]: end part two time $((Get-Date).DateTime)" -ForegroundColor Yellow
+
 }
 
 PartOne;
