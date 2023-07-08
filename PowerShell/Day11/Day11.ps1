@@ -26,7 +26,7 @@ $global:IsPartTwo = $false;
 class Item {
     [System.Boolean]$hasMod = $false
     # is a mod or the original value of the item
-    [System.Int64]$OriginalValue = 0
+    [bigint]$Value = 0
     [System.Int64]$Mod = $null
 }
 
@@ -60,7 +60,7 @@ class Monkey {
             
             if ($global:IsPartTwo) {
                 [Item]$item = [Item]::new();
-                $item.OriginalValue = $num;
+                $item.Value = $num;
                 $this.Items.Add($item) | Out-Null;
             }
             else {
@@ -102,7 +102,7 @@ class Monkey {
      
     [System.Void]Debug() {
         Write-Host "[DEBUG MONKEY]: ~~~~ Debugging monkey $($this.Id) ~~~~" -ForegroundColor Yellow
-        Write-Host "[DEBUG MONKEY]: Items: [$($this.Items | ForEach-Object { $_.OriginalValue })]" -ForegroundColor Yellow
+        Write-Host "[DEBUG MONKEY]: Items: [$($this.Items | ForEach-Object { $_.Value })]" -ForegroundColor Yellow
         Write-Host "[DEBUG MONKEY]: Operation: $($this.Operation)" -ForegroundColor Yellow
         Write-Host "[DEBUG MONKEY]: Test: $($this.Test)" -ForegroundColor Yellow
         Write-Host "[DEBUG MONKEY]: TestFalse: $($this.TestFalse)" -ForegroundColor Yellow
@@ -124,6 +124,11 @@ class Monkey {
         }
     }
 
+    [System.Boolean]TestItemIsDivisible2([Item]$item, $divisor) {
+        $res = $null;
+        [System.Boolean]$res = $item.Value % [System.Int64]$divisor -eq 0;
+        return $res;
+    }
     [System.Boolean]TestWorryIsDivisible([Me]$me, $divisor, [System.Boolean]$isPartTwo) {
         $res = $null;
         if ($isPartTwo) {
@@ -154,29 +159,21 @@ class Monkey {
         switch ($operator) {
             "+" {
 
-                if (!$item.hasMod) {
+                $item.Value = [bigint]::Parse(
+                    [bigint]::Add(
+                        [bigint]::Parse($item.Value.ToString()), 
+                        $(
+                            if ($splitExpressionStr[3] -cmatch "old") {
+                                [bigint]::Parse($item.Value.ToString());
+                            }
+                            else {
+                                [bigint]::Parse($splitExpressionStr[3].ToString());
+                            }
+                        )
+                    ).ToString()
+                );
 
-                    $meRef.ExprResult = [bigint]::Remainder(
-                        [bigint]::Parse(
-                            [bigint]::Add(
-                                [bigint]::Parse($item.OriginalValue.ToString()), 
-                                $(
-                                    if ($splitExpressionStr[3] -cmatch "old") {
-                                        [bigint]::Parse($item.OriginalValue.ToString());
-                                    }
-                                    else {
-                                        [bigint]::Parse($splitExpressionStr[3].ToString());
-                                    }
-                                )
-                            ).ToString()
-                        ), 
-                        [bigint]::Parse($meRef.BigMod.ToString())
-                    );
-                }
-                else {
-
-                }
-
+                $item.Value %= $meRef.BigMod;
 
                 #     Write-Host "with big mod $($meRef.BigMod)" -ForegroundColor Cyan
                 #     Write-Host "has remainder $($meRef.ExprResult)" -ForegroundColor Green
@@ -186,31 +183,21 @@ class Monkey {
             }
             "*" {
 
-                if (!$item.hasMod) {
-                    
-                    $meRef.ExprResult = [bigint]::Remainder(
-                        [bigint]::Parse(
-                            [bigint]::Multiply(
-                                [bigint]::Parse($item.OriginalValue.ToString()),
-                                $(
-                                    if ($splitExpressionStr[3] -cmatch "old") {
-                                        [bigint]::Parse($item.OriginalValue.ToString());
-                                    }
-                                    else {
-                                        [bigint]::Parse($splitExpressionStr[3].ToString());
-                                    }
-                                )
-                            ).ToString()
-                        ), 
-                        [bigint]::Parse($meRef.BigMod.ToString())
-                    );
+                $item.Value = [bigint]::Parse(
+                    [bigint]::Multiply(
+                        [bigint]::Parse($item.Value.ToString()),
+                        $(
+                            if ($splitExpressionStr[3] -cmatch "old") {
+                                [bigint]::Parse($item.Value.ToString());
+                            }
+                            else {
+                                [bigint]::Parse($splitExpressionStr[3].ToString());
+                            }
+                        )
+                    ).ToString()
+                );
 
-                }
-                else {
-
-                }
-
-
+                $item.Value %= $meRef.BigMod;
                 #     Write-Host "with big mod $($meRef.BigMod)" -ForegroundColor Cyan
                 #     Write-Host "has remainder $($meRef.ExprResult)" -ForegroundColor Green
                 #     Write-Host "with worry $($meRef.Worry)" -ForegroundColor Red
@@ -371,6 +358,8 @@ Function ProceedTurn2([Monkey]$mky, [Me]$me, [System.Collections.ArrayList]$monk
         #update worry level based on item's level
         $mky.IncrementInspect();
         $mky.SetMyWorryDuringInspect2($me, $mky.Id, $currentItem, $monkeyList);
+
+        # Write-Host "current item now $($currentItem.Value)" -ForegroundColor Yellow;
         
         #test
         
@@ -379,7 +368,7 @@ Function ProceedTurn2([Monkey]$mky, [Me]$me, [System.Collections.ArrayList]$monk
             [System.StringSplitOptions]::RemoveEmptyEntries
         )[0].Trim();
         
-        [System.Boolean]$testResult = $mky.TestWorryIsDivisible($me, $divisor, $isPartTwo);
+        [System.Boolean]$testResult = $mky.TestItemIsDivisible2($currentItem, $divisor);
         
         # Write-Host "[DEBUG]: worry $($me.Worry) is divisible => $testResult" -ForegroundColor Cyan
         # Write-Host "[DEBUG]: worry is divisible => $testResult" -ForegroundColor Yellow
@@ -560,7 +549,7 @@ Function PartTwo {
 
     }
  
-    # Write-Host "[DEBUG]: what is big mod $($Me.BigMod)" -ForegroundColor Yellow
+    Write-Host "[DEBUG]: what is big mod $($Me.BigMod)" -ForegroundColor Yellow
 
     Write-Host "[INFO]: solving part two..." -ForegroundColor Cyan;
 
