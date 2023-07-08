@@ -23,6 +23,13 @@ class Me {
 
 $global:IsPartTwo = $false;
 
+class Item {
+    [System.Boolean]$hasMod = $false
+    # is a mod or the original value of the item
+    [bigint]$Value = 0
+    [System.Int64]$Mod = $null
+}
+
 class Monkey {
     $Id
     [System.Collections.ArrayList]$Items = @()
@@ -48,10 +55,17 @@ class Monkey {
             ", ", [System.StringSplitOptions]::RemoveEmptyEntries
         );
 
-
         foreach ($numStr in $itemsStr.Split(" ")) {
-            $num = [System.Double]$numStr;            
-            $this.Items.Add($num) | Out-Null;
+            [System.Int64]$num = [System.Double]$numStr;            
+            
+            if ($global:IsPartTwo) {
+                [Item]$item = [Item]::new();
+                $item.Value = $num;
+                $this.Items.Add($item) | Out-Null;
+            }
+            else {
+                $this.Items.Add($num) | Out-Null;    
+            }
         }
 
         $this.Operation = $operation.Split(":")[1] | ForEach-Object {
@@ -88,7 +102,7 @@ class Monkey {
      
     [System.Void]Debug() {
         Write-Host "[DEBUG MONKEY]: ~~~~ Debugging monkey $($this.Id) ~~~~" -ForegroundColor Yellow
-        Write-Host "[DEBUG MONKEY]: Items: [$($this.Items)]" -ForegroundColor Yellow
+        Write-Host "[DEBUG MONKEY]: Items: [$($this.Items | ForEach-Object { $_.Value })]" -ForegroundColor Yellow
         Write-Host "[DEBUG MONKEY]: Operation: $($this.Operation)" -ForegroundColor Yellow
         Write-Host "[DEBUG MONKEY]: Test: $($this.Test)" -ForegroundColor Yellow
         Write-Host "[DEBUG MONKEY]: TestFalse: $($this.TestFalse)" -ForegroundColor Yellow
@@ -110,20 +124,87 @@ class Monkey {
         }
     }
 
+    [System.Boolean]TestItemIsDivisible2([Item]$item, $divisor) {
+        $res = $null;
+        [System.Boolean]$res = $item.Value % [System.Int64]$divisor -eq 0;
+        return $res;
+    }
     [System.Boolean]TestWorryIsDivisible([Me]$me, $divisor, [System.Boolean]$isPartTwo) {
         $res = $null;
         if ($isPartTwo) {
             [System.Boolean]$res = [System.Int64]$me.ExprResult % [System.Int64]$divisor -eq 0;
-            # [System.Boolean]$res = [bigint]::Remainder(
-            #     [bigint]::Parse($me.ExprResult.ToString()),
-            #     [bigint]::Parse($divisor.ToString())
-            # ) -eq 0;
         }
         else {
             [System.Boolean]$res = $me.Worry % $divisor -eq 0;
 
         }
         return $res;
+    }
+    [System.Void]SetMyWorryDuringInspect2(
+        [Me]$meRef,
+        [System.String]$monkeyID,
+        [Item]$item,
+        [System.Collections.ArrayList]$monkeyList
+    ) {
+        [Monkey]$mky = $monkeyList[$monkeyID];
+
+        # perform math operation based on the monkey's operation
+        [System.Array]$splitExpressionStr = $mky.Operation.Split(
+            " = ", 
+            [System.StringSplitOptions]::RemoveEmptyEntries
+        ).Trim();
+
+        [System.String]$operator = $splitExpressionStr[2];
+
+        switch ($operator) {
+            "+" {
+
+                $item.Value = [bigint]::Parse(
+                    [bigint]::Add(
+                        [bigint]::Parse($item.Value.ToString()), 
+                        $(
+                            if ($splitExpressionStr[3] -cmatch "old") {
+                                [bigint]::Parse($item.Value.ToString());
+                            }
+                            else {
+                                [bigint]::Parse($splitExpressionStr[3].ToString());
+                            }
+                        )
+                    ).ToString()
+                );
+
+                $item.Value %= $meRef.BigMod;
+
+                #     Write-Host "with big mod $($meRef.BigMod)" -ForegroundColor Cyan
+                #     Write-Host "has remainder $($meRef.ExprResult)" -ForegroundColor Green
+                #     Write-Host "with worry $($meRef.Worry)" -ForegroundColor Red
+
+                break;
+            }
+            "*" {
+
+                $item.Value = [bigint]::Parse(
+                    [bigint]::Multiply(
+                        [bigint]::Parse($item.Value.ToString()),
+                        $(
+                            if ($splitExpressionStr[3] -cmatch "old") {
+                                [bigint]::Parse($item.Value.ToString());
+                            }
+                            else {
+                                [bigint]::Parse($splitExpressionStr[3].ToString());
+                            }
+                        )
+                    ).ToString()
+                );
+
+                $item.Value %= $meRef.BigMod;
+                #     Write-Host "with big mod $($meRef.BigMod)" -ForegroundColor Cyan
+                #     Write-Host "has remainder $($meRef.ExprResult)" -ForegroundColor Green
+                #     Write-Host "with worry $($meRef.Worry)" -ForegroundColor Red
+                
+                break;
+            }
+        }
     }
 
     [System.Void]SetMyWorryDuringInspect(
@@ -137,7 +218,11 @@ class Monkey {
         $meRef.Worry = [bigint]::Parse($item.ToString());
 
         # perform math operation based on the monkey's operation
-        [System.Array]$splitExpressionStr = $mky.Operation.Split(" = ", [System.StringSplitOptions]::RemoveEmptyEntries).Trim();
+        [System.Array]$splitExpressionStr = $mky.Operation.Split(
+            " = ", 
+            [System.StringSplitOptions]::RemoveEmptyEntries
+        ).Trim();
+
         [System.String]$operator = $splitExpressionStr[2];
 
         switch ($operator) {
@@ -159,12 +244,6 @@ class Monkey {
                     [bigint]::Parse($meRef.BigMod.ToString())
                 );
 
-                # if ($global:IsPartTwo) {
-                #     Write-Host "with big mod $($meRef.BigMod)" -ForegroundColor Cyan
-                #     Write-Host "has remainder $($meRef.ExprResult)" -ForegroundColor Green
-                #     Write-Host "with worry $($meRef.Worry)" -ForegroundColor Red
-                # }
-
                 break;
             }
             "*" {
@@ -185,12 +264,6 @@ class Monkey {
                     [bigint]::Parse($meRef.Worry.ToString()), 
                     [bigint]::Parse($meRef.BigMod.ToString())
                 );
-
-                # if ($global:IsPartTwo) {
-                #     Write-Host "with big mod $($meRef.BigMod)" -ForegroundColor Cyan
-                #     Write-Host "has remainder $($meRef.ExprResult)" -ForegroundColor Green
-                #     Write-Host "with worry $($meRef.Worry)" -ForegroundColor Red
-                # }
                 
                 break;
             }
@@ -267,6 +340,75 @@ Function ProceedTurn([Monkey]$mky, [Me]$me, [System.Collections.ArrayList]$monke
             )[0].Trim();
 
             $monkeyList[$monkeyIdToThrowTo].Items.Add($me.Worry) | Out-Null;
+            
+            # [Monkey]::DebugMonkeyById($mky.Id, $MonkeyList);
+            # [Monkey]::DebugMonkeyById($monkeyIdToThrowTo, $MonkeyList);
+        }
+    }
+}
+
+Function ProceedTurn2([Monkey]$mky, [Me]$me, [System.Collections.ArrayList]$monkeyList, [System.Boolean]$isPartTwo) {
+    #inspect
+    [System.UInt64]$itemsCount = $mky.Items.Count;
+
+    while ($itemsCount -ne 0) {
+
+        [Item]$currentItem = $mky.Items[0];
+        
+        #update worry level based on item's level
+        $mky.IncrementInspect();
+        $mky.SetMyWorryDuringInspect2($me, $mky.Id, $currentItem, $monkeyList);
+
+        # Write-Host "current item now $($currentItem.Value)" -ForegroundColor Yellow;
+        
+        #test
+        
+        $divisor = $mky.Test.Split(
+            "test: divisible by", 
+            [System.StringSplitOptions]::RemoveEmptyEntries
+        )[0].Trim();
+        
+        [System.Boolean]$testResult = $mky.TestItemIsDivisible2($currentItem, $divisor);
+        
+        # Write-Host "[DEBUG]: worry $($me.Worry) is divisible => $testResult" -ForegroundColor Cyan
+        # Write-Host "[DEBUG]: worry is divisible => $testResult" -ForegroundColor Yellow
+        
+        # perform true or false action after test assertion
+        # remove from current monkey id and throw (item with new worry level) to monkey with id from the test action
+        if ($testResult) {
+            # Write-Host "[INFO]: test result true THROW" -ForegroundColor Green
+            # true action
+            
+            # remove from current monkey
+            [Monkey]$currentMonkey = $monkeyList[$mky.Id]
+            $currentMonkey.Items.Remove($currentItem);
+            $itemsCount--;
+
+            #get the monkey to throw to
+            $monkeyIdToThrowTo = $mky.TestTrue.Split(
+                "throw to monkey ",
+                [System.StringSplitOptions]::RemoveEmptyEntries
+            )[0].Trim();
+                
+            $monkeyList[$monkeyIdToThrowTo].Items.Add($currentItem) | Out-Null
+                
+            # [Monkey]::DebugMonkeyById($mky.Id, $MonkeyList);
+            # [Monkey]::DebugMonkeyById($monkeyIdToThrowTo, $MonkeyList);
+        }
+        else {
+            # Write-Host "[INFO]: test result false THROW" -ForegroundColor Green
+            # false action
+            # remove from current monkey
+            $monkeyList[$mky.Id].Items.Remove($currentItem);
+            $itemsCount--;
+            
+            #get the monkey to throw to
+            $monkeyIdToThrowTo = $mky.TestFalse.Split(
+                "throw to monkey ",
+                [System.StringSplitOptions]::RemoveEmptyEntries
+            )[0].Trim();
+
+            $monkeyList[$monkeyIdToThrowTo].Items.Add($currentItem) | Out-Null;
             
             # [Monkey]::DebugMonkeyById($mky.Id, $MonkeyList);
             # [Monkey]::DebugMonkeyById($monkeyIdToThrowTo, $MonkeyList);
@@ -406,8 +548,8 @@ Function PartTwo {
         )[0].Trim();
 
     }
-
-    # Write-Host "[DEBUG]: what is big mod $($Me.BigMod)" -ForegroundColor Yellow
+ 
+    Write-Host "[DEBUG]: what is big mod $($Me.BigMod)" -ForegroundColor Yellow
 
     Write-Host "[INFO]: solving part two..." -ForegroundColor Cyan;
 
@@ -419,14 +561,15 @@ Function PartTwo {
 
             [Monkey]$mky = $monkey
         
-            ProceedTurn $mky $Me $MonkeyList $true
+            ProceedTurn2 $mky $Me $MonkeyList $true
          
-            # Write-Host "[DEBUG AFTER TURN]" -ForegroundColor Green
-            # foreach ($monkey in $MonkeyList) {
-            #     $monkey.Debug();
-            # }
-        
+            # Write-Host "[DEBUG AFTER TURN] $round" -ForegroundColor Green
+            foreach ($monkey in $MonkeyList) {
+                # $monkey.Debug();
+            }
+            
         }
+        Write-Host "[DEBUG AFTER ROUND] $round" -ForegroundColor Green
     }
 
     [System.Collections.ArrayList]$inspectionCountList = $MonkeyList | ForEach-Object {
