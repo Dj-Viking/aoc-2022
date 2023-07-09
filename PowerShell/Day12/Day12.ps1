@@ -13,15 +13,30 @@ param(
 $myInput = Read-Input $InputFilename $PSScriptRoot
 $lines = Get-InputLines $myInput
 
+class AdjacentHashMap {
+    [System.Array]$Up = @();
+    [System.Array]$Down = @();
+    [System.Array]$Left = @();
+    [System.Array]$Right = @();
+
+    [System.Void]Debug() {
+        
+    }
+}
+
 class Me {
-    [System.Array]$MyLocation = @();
-    [System.Array]$ValidDirection = @();
+    [System.Int64]$X = 0;
+    [System.Int64]$Y = 0;
+    [System.Char]$CurrentLevel = " ";
+    [System.Collections.ArrayList]$PossiblePaths = @();
 
     [System.Void]Init([Grid]$grid) {
         :getStart for ($row = 0; $row -lt $grid.Rows.Count; $row++) {
             for ($col = 0; $col -lt $grid.Rows[$row].Count; $col++) {
                 if ($grid.Rows[$row][$col] -eq "S") {
-                    $this.MyLocation = @($row, $col);
+                    $this.X = $col;
+                    $this.Y = $row;
+                    $this.CurrentLevel = "a";
                     break getStart;
                 }
             }
@@ -29,12 +44,43 @@ class Me {
     }
 
     [System.Void]DebugLocation() {
-        Write-Host "[ME DEBUG]: my location => [$($this.MyLocation[0]), $($this.MyLocation[1])]" -ForegroundColor Yellow
+        Write-Host "[ME DEBUG]: my location => [$($this.X), $($this.Y)] current level => [$($this.CurrentLevel)]" -ForegroundColor Magenta
     }
 
     # can only move in the direction of one letter above or below
-    [System.Void]GetValidDirection([Grid]$grid) {
+    # gather all possible paths I can take - pick the shortest path to the highest point at E, 
+    # the amount of steps on the shortest path is the answer
+    [System.Void]GetPossiblePaths([Grid]$grid) {
+        
+    }
 
+    [AdjacentHashMap]GetAdjacentLevelsFromCurrent([Grid]$grid) {
+
+        [AdjacentHashMap]$adjList = [AdjacentHashMap]::new(); 
+
+        $ErrorActionPreference = 'Continue';
+
+        #up
+        if ($null -ne [System.Char]$grid.Rows[$this.X - 1][$this.Y]) {
+            $adjList.Up = @(($this.X - 1), $this.Y)
+        }
+        #down
+        if ($null -ne [System.Char]$grid.Rows[$this.X + 1][$this.Y]) {
+            $adjList.Down = @(($this.X + 1), $this.Y)
+        }
+        #left
+        if ($null -ne [System.Char]$grid.Rows[$this.X][$this.Y - 1]) {
+            $adjList.Left = @($this.X, $this.Y - 1)
+        }
+        #right
+        if ($null -ne [System.Char]$grid.Rows[$this.X][$this.Y + 1]) {
+            $adjList.Right = @($this.X, $this.Y + 1)
+        }
+
+        $ErrorActionPreference = 'Stop';
+        
+        return $adjList;
+        
     }
 }
 
@@ -76,6 +122,8 @@ Function PartOne {
     $Me.Init($Grid);
 
     $Me.DebugLocation();
+
+    [AdjacentHashMap]$adjMap = $Me.GetAdjacentLevelsFromCurrent($Grid);
 
 
     Write-Host "[INFO]: solving part one..." -ForegroundColor Cyan
