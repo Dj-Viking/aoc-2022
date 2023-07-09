@@ -14,14 +14,34 @@ $myInput = Read-Input $InputFilename $PSScriptRoot
 $lines = Get-InputLines $myInput
 
 class AdjacentHashMap {
-    [System.Array]$Up = @();
-    [System.Array]$Down = @();
-    [System.Array]$Left = @();
-    [System.Array]$Right = @();
+    [System.Collections.Hashtable]$Up = @{
+        coords = @()
+        char   = ' '
+    };
+    [System.Collections.Hashtable]$Down = @{
+        coords = @()
+        char   = ' '
+    };
+    [System.Collections.Hashtable]$Left = @{
+        coords = @()
+        char   = ' '
+    };
+    [System.Collections.Hashtable]$Right = @{
+        coords = @()
+        char   = ' '
+    };
 
     [System.Void]Debug() {
-        
+        Write-Host "[DEBUG ADJ]: up =>    $($this.Up."coords") | $($this.Up."char")" -ForegroundColor Yellow
+        Write-Host "[DEBUG ADJ]: down =>  $($this.Down."coords")  | $($this.Down."char")" -ForegroundColor Yellow
+        Write-Host "[DEBUG ADJ]: left =>  $($this.Left."coords") | $($this.Left."char")" -ForegroundColor Yellow
+        Write-Host "[DEBUG ADJ]: right => $($this.Right."coords")  | $($this.Right."char")" -ForegroundColor Yellow
     }
+}
+
+class Point {
+    [System.Int64]$X = 0;
+    [System.Int64]$Y = 0;
 }
 
 class Me {
@@ -50,36 +70,52 @@ class Me {
     # can only move in the direction of one letter above or below
     # gather all possible paths I can take - pick the shortest path to the highest point at E, 
     # the amount of steps on the shortest path is the answer
-    [System.Void]GetPossiblePaths([Grid]$grid) {
+    [System.Void]GetPossiblePaths([Grid]$grid, [Point]$point) {
         
     }
 
-    [AdjacentHashMap]GetAdjacentLevelsFromCurrent([Grid]$grid) {
+    static [AdjacentHashMap]GetAdjacentLevelsFromPoint([Grid]$grid, [Point]$point) {
 
-        [AdjacentHashMap]$adjList = [AdjacentHashMap]::new(); 
-
-        $ErrorActionPreference = 'Continue';
+        [AdjacentHashMap]$adjMap = [AdjacentHashMap]::new(); 
 
         #up
-        if ($null -ne [System.Char]$grid.Rows[$this.X - 1][$this.Y]) {
-            $adjList.Up = @(($this.X - 1), $this.Y)
+        if (($point.X - 1) -ne -1) {
+            $adjMap.Up."coords" = @(($point.X - 1), $point.Y);
+            $adjMap.Up."char" = $grid.Rows[($point.X - 1)][$point.Y];
+        }
+        else {
+            $adjMap.Up."coords" = $null;
+            $adjMap.Up."char" = $null;
         }
         #down
-        if ($null -ne [System.Char]$grid.Rows[$this.X + 1][$this.Y]) {
-            $adjList.Down = @(($this.X + 1), $this.Y)
+        if (($point.X + 1) -le $grid.Rows.Count) {
+            $adjMap.Down."coords" = @(($point.X + 1), $point.Y);
+            $adjMap.Down."char" = $grid.Rows[($point.X + 1)][$point.Y];
+        }
+        else {
+            $adjMap.Down."coords" = $null;
+            $adjMap.Down."char" = $null;
         }
         #left
-        if ($null -ne [System.Char]$grid.Rows[$this.X][$this.Y - 1]) {
-            $adjList.Left = @($this.X, $this.Y - 1)
+        if (($point.Y - 1) -ne -1) {
+            $adjMap.Left."coords" = @($point.X, ($point.Y - 1));
+            $adjMap.Left."char" = $grid.Rows[$point.X][($point.Y - 1)];
+        }
+        else {
+            $adjMap.Left."coords" = $null;
+            $adjMap.Left."char" = $null;
         }
         #right
-        if ($null -ne [System.Char]$grid.Rows[$this.X][$this.Y + 1]) {
-            $adjList.Right = @($this.X, $this.Y + 1)
+        if ($point.Y -le $grid.Rows[0].Count) {
+            $adjMap.Right."coords" = @($point.X, ($point.Y + 1))
+            $adjMap.Right."char" = $grid.Rows[$point.X][($point.Y + 1)]
+        }
+        else {
+            $adjMap.Right."coords" = $null;
+            $adjMap.Right."char" = $null;
         }
 
-        $ErrorActionPreference = 'Stop';
-        
-        return $adjList;
+        return $adjMap;
         
     }
 }
@@ -114,6 +150,7 @@ Function PartOne {
 
     [Grid]$Grid = [Grid]::new();
     [Me]$Me = [Me]::new();
+    [Point]$Point = [Point]::new();
 
     $Grid.Init($lines);
 
@@ -123,8 +160,12 @@ Function PartOne {
 
     $Me.DebugLocation();
 
-    [AdjacentHashMap]$adjMap = $Me.GetAdjacentLevelsFromCurrent($Grid);
+    $Point.X = $Me.X;
+    $Point.Y = $Me.Y;
 
+    [AdjacentHashMap]$adjMap = [Me]::GetAdjacentLevelsFromPoint($Grid, $Point);
+
+    $adjMap.Debug();
 
     Write-Host "[INFO]: solving part one..." -ForegroundColor Cyan
     Write-Host "[INFO]: part one answer is $answer1" -ForegroundColor Green
