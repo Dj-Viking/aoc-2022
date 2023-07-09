@@ -29,11 +29,12 @@ class Me {
     }
 
     [System.Void]DebugLocation() {
-        Write-Host "my location => [$($this.MyLocation[0]), $($this.MyLocation[1])]"
+        Write-Host "[ME DEBUG]: my location => [$($this.MyLocation[0]), $($this.MyLocation[1])]" -ForegroundColor Yellow
     }
 
+    # can only move in the direction of one letter above or below
     [System.Void]GetValidDirection([Grid]$grid) {
-        
+
     }
 }
 
@@ -42,7 +43,7 @@ class Grid {
 
     [System.Void]Debug() {
         foreach ($row in $this.Rows) {
-            Write-Host "row => [$row]" -ForegroundColor Yellow
+            Write-Host "[GRID DEBUG]: row => [$row]" -ForegroundColor Yellow
         }
     }
 
