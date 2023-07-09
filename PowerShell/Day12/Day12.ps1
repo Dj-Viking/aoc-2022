@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory=$true, HelpMessage="Please enter an input filename")]
+    [Parameter(Mandatory = $true, HelpMessage = "Please enter an input filename")]
     [System.String]$InputFilename
 )
 
@@ -13,7 +13,70 @@ param(
 $myInput = Read-Input $InputFilename $PSScriptRoot
 $lines = Get-InputLines $myInput
 
+class Me {
+    [System.Array]$MyLocation = @();
+    [System.Array]$ValidDirection = @();
+
+    [System.Void]Init([Grid]$grid) {
+        :getStart for ($row = 0; $row -lt $grid.Rows.Count; $row++) {
+            for ($col = 0; $col -lt $grid.Rows[$row].Count; $col++) {
+                if ($grid.Rows[$row][$col] -eq "S") {
+                    $this.MyLocation = @($row, $col);
+                    break getStart;
+                }
+            }
+        }
+    }
+
+    [System.Void]DebugLocation() {
+        Write-Host "my location => [$($this.MyLocation[0]), $($this.MyLocation[1])]"
+    }
+
+    [System.Void]GetValidDirection([Grid]$grid) {
+        
+    }
+}
+
+class Grid {
+    [System.Collections.ArrayList]$Rows = @()
+
+    [System.Void]Debug() {
+        foreach ($row in $this.Rows) {
+            Write-Host "row => [$row]" -ForegroundColor Yellow
+        }
+    }
+
+    [System.Void]Init([System.Array]$lines) {
+        foreach ($line in $lines) {
+            [System.String]$_line = $line;
+            
+            [System.Array]$splitLine = $_line.ToCharArray();
+
+            [System.Collections.ArrayList]$row = @();
+
+            foreach ($str in $splitLine) {
+                $row.Add($str) | Out-Null;
+            }
+
+            $this.Rows.Add($row);
+        }
+    }
+}
+
 Function PartOne {
+
+    [Grid]$Grid = [Grid]::new();
+    [Me]$Me = [Me]::new();
+
+    $Grid.Init($lines);
+
+    $Grid.Debug();
+
+    $Me.Init($Grid);
+
+    $Me.DebugLocation();
+
+
     Write-Host "[INFO]: solving part one..." -ForegroundColor Cyan
     Write-Host "[INFO]: part one answer is $answer1" -ForegroundColor Green
 }
