@@ -45,17 +45,25 @@ class Point {
 }
 
 class Me {
-    [System.Int64]$X = 0;
-    [System.Int64]$Y = 0;
+    [Point]$MyCoords = [Point]::new();
     [System.Char]$CurrentLevel = " ";
-    [System.Collections.ArrayList]$PossiblePaths = @();
+    # multi dimensional list of coordinate points
+    [System.Collections.ArrayList]$PossiblePaths = 
+    # list of point lists
+    @(
+        # point list
+        # @(
+        #### points
+        #### @()
+        # )
+    ); 
 
     [System.Void]Init([Grid]$grid) {
         :getStart for ($row = 0; $row -lt $grid.Rows.Count; $row++) {
             for ($col = 0; $col -lt $grid.Rows[$row].Count; $col++) {
                 if ($grid.Rows[$row][$col] -eq "S") {
-                    $this.X = $col;
-                    $this.Y = $row;
+                    $this.MyCoords.X = $col;
+                    $this.MyCoords.Y = $row;
                     $this.CurrentLevel = "a";
                     break getStart;
                 }
@@ -64,14 +72,19 @@ class Me {
     }
 
     [System.Void]DebugLocation() {
-        Write-Host "[ME DEBUG]: my location => [$($this.X), $($this.Y)] current level => [$($this.CurrentLevel)]" -ForegroundColor Magenta
+        Write-Host "[ME DEBUG]: my location => [$($this.MyCoords.X), $($this.MyCoords.Y)] current level => [$($this.CurrentLevel)]" -ForegroundColor Magenta
     }
 
-    # can only move in the direction of one letter above or below
+    # can only move in the direction of one letter above, same, or below
     # gather all possible paths I can take - pick the shortest path to the highest point at E, 
     # the amount of steps on the shortest path is the answer
     [System.Void]GetPossiblePaths([Grid]$grid, [Point]$point) {
         
+    }
+
+    [System.Void]MoveLocation([Point]$point) {
+        $this.MyCoords.X = $point.X;
+        $this.MyCoords.Y = $point.Y;
     }
 
     static [AdjacentHashMap]GetAdjacentLevelsFromPoint([Grid]$grid, [Point]$point) {
@@ -160,6 +173,7 @@ Function PartOne {
 
     $Me.DebugLocation();
 
+    #start 
     $Point.X = $Me.X;
     $Point.Y = $Me.Y;
 
