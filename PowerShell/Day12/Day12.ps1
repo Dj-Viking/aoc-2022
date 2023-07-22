@@ -15,27 +15,35 @@ $lines = Get-InputLines $myInput
 
 class AdjacentHashMap {
     [System.Collections.Hashtable]$Up = @{
-        coords = @()
+        coords = [Point]::new()
         char   = ' '
     };
     [System.Collections.Hashtable]$Down = @{
-        coords = @()
+        coords = [Point]::new()
         char   = ' '
     };
     [System.Collections.Hashtable]$Left = @{
-        coords = @()
+        coords = [Point]::new()
         char   = ' '
     };
     [System.Collections.Hashtable]$Right = @{
-        coords = @()
+        coords = [Point]::new()
         char   = ' '
     };
 
     [System.Void]Debug() {
-        Write-Host "[DEBUG ADJ]: up =>    $($this.Up."coords") | $($this.Up."char")" -ForegroundColor Yellow
-        Write-Host "[DEBUG ADJ]: down =>  $($this.Down."coords")  | $($this.Down."char")" -ForegroundColor Yellow
-        Write-Host "[DEBUG ADJ]: left =>  $($this.Left."coords") | $($this.Left."char")" -ForegroundColor Yellow
-        Write-Host "[DEBUG ADJ]: right => $($this.Right."coords")  | $($this.Right."char")" -ForegroundColor Yellow
+        $(if ($null -ne $this.Up."coords") { 
+                Write-Host "[DEBUG ADJ]: up =>    [$($this.Up."coords".X), $($this.Up."coords".Y)] | $($this.Up."char")" -ForegroundColor Yellow 
+            })
+        $(if ($null -ne $this.Down."coords") { 
+                Write-Host "[DEBUG ADJ]: down =>  [$($this.Down."coords".X), $($this.Down."coords".Y)]  | $($this.Down."char")" -ForegroundColor Yellow 
+            })
+        $(if ($null -ne $this.Left."coords") { 
+                Write-Host "[DEBUG ADJ]: left =>  [$($this.Left."coords".X), $($this.Left."coords".Y)] | $($this.Left."char")" -ForegroundColor Yellow 
+            })
+        $(if ($null -ne $this.Right."coords") { 
+                Write-Host "[DEBUG ADJ]: right => [$($this.Right."coords".X), $($this.Right."coords".Y)]  | $($this.Right."char")" -ForegroundColor Yellow 
+            })
     }
 }
 
@@ -45,16 +53,32 @@ class Point {
 }
 
 class Me {
+    # array of points
+    [System.Collections.ArrayList]$Visited = @();
     [Point]$MyCoords = [Point]::new();
     [System.Char]$CurrentLevel = " ";
     # multi dimensional list of coordinate points
+    <#
+        which is the shortest, that is part of the final answer
+        [
+            path 1
+            [    X, Y
+                (0, 2), (2, 3) => end
+            ]
+
+            path 2
+            [
+                (0, 2), (2, 1) => end
+            ]
+        ]
+    #>
     [System.Collections.ArrayList]$PossiblePaths = 
-    # list of point lists
+    # list of points lists
     @(
-        # point list
+        # points list
         # @(
         #### points
-        #### @()
+        #### [Point], [Point]
         # )
     ); 
 
@@ -74,11 +98,19 @@ class Me {
     [System.Void]DebugLocation() {
         Write-Host "[ME DEBUG]: my location => [$($this.MyCoords.X), $($this.MyCoords.Y)] current level => [$($this.CurrentLevel)]" -ForegroundColor Magenta
     }
+    [System.Void]DebugVisited() {
+        Write-Host "line number => $($MyInvocation.ScriptLineNumber)" -ForegroundColor Cyan
+        Write-Host "[ME DEBUG]: my visited" -ForegroundColor Green
+        foreach ($point in $this.Visited) {
+            [Point]$pt = $point;
+            Write-Host "[ME DEBUG VISITED]: visited point => $($pt.X), $($pt.Y)" -ForegroundColor Cyan
+        }
+    }
 
     # can only move in the direction of one letter above, same, or below
     # gather all possible paths I can take - pick the shortest path to the highest point at E, 
     # the amount of steps on the shortest path is the answer
-    [System.Void]GetPossiblePaths([Grid]$grid, [Point]$point) {
+    [System.Void]GetAllPossiblePaths([Grid]$grid, [Point]$point) {
         
     }
 
@@ -93,7 +125,8 @@ class Me {
 
         #up
         if (($point.X - 1) -ne -1) {
-            $adjMap.Up."coords" = @(($point.X - 1), $point.Y);
+            $adjMap.Up."coords".X = $point.X - 1;
+            $adjMap.Up."coords".Y = $point.Y;
             $adjMap.Up."char" = $grid.Rows[($point.X - 1)][$point.Y];
         }
         else {
@@ -102,7 +135,8 @@ class Me {
         }
         #down
         if (($point.X + 1) -le $grid.Rows.Count) {
-            $adjMap.Down."coords" = @(($point.X + 1), $point.Y);
+            $adjMap.Down."coords".X = $point.X + 1;
+            $adjMap.Down."coords".Y = $point.Y;
             $adjMap.Down."char" = $grid.Rows[($point.X + 1)][$point.Y];
         }
         else {
@@ -111,7 +145,8 @@ class Me {
         }
         #left
         if (($point.Y - 1) -ne -1) {
-            $adjMap.Left."coords" = @($point.X, ($point.Y - 1));
+            $adjMap.Left."coords".X = $point.X;
+            $adjMap.Left."coords".Y = $point.Y - 1;
             $adjMap.Left."char" = $grid.Rows[$point.X][($point.Y - 1)];
         }
         else {
@@ -120,7 +155,8 @@ class Me {
         }
         #right
         if ($point.Y -le $grid.Rows[0].Count) {
-            $adjMap.Right."coords" = @($point.X, ($point.Y + 1))
+            $adjMap.Right."coords".X = $point.X;
+            $adjMap.Right."coords".Y = $point.Y + 1;
             $adjMap.Right."char" = $grid.Rows[$point.X][($point.Y + 1)]
         }
         else {
@@ -154,7 +190,7 @@ class Grid {
                 $row.Add($str) | Out-Null;
             }
 
-            $this.Rows.Add($row);
+            $this.Rows.Add($row) | Out-Null;
         }
     }
 }
@@ -163,7 +199,6 @@ Function PartOne {
 
     [Grid]$Grid = [Grid]::new();
     [Me]$Me = [Me]::new();
-    [Point]$Point = [Point]::new();
 
     $Grid.Init($lines);
 
@@ -173,13 +208,80 @@ Function PartOne {
 
     $Me.DebugLocation();
 
-    #start 
-    $Point.X = $Me.X;
-    $Point.Y = $Me.Y;
+    
+    
+    #start out visited the starting point of my location
+    $Me.DebugLocation();
+    # dereference the point from the start
+    [Point]$pt = [Point]::new();
+    $pt.X = $Me.MyCoords.X;
+    $pt.Y = $Me.MyCoords.Y;
+    $Me.Visited.Add($pt) | Out-Null;
+    $Me.DebugVisited();
 
-    [AdjacentHashMap]$adjMap = [Me]::GetAdjacentLevelsFromPoint($Grid, $Point);
+    [System.Int64]$step = 0;
+    while ($Me.CurrentLevel -ne "E") {
+        
+        # get adjacent locations from my current location
+        [AdjacentHashMap]$adj = [Me]::GetAdjacentLevelsFromPoint($Grid, $Me.MyCoords);
+        $adj.Debug();
+        # move to a location based on which adjacent location I can move to
+        #down
+        if (($null -ne $adj.Down."coords") `
+                -and ($adj.Down."coords" -notin $Me.Visited) `
+                -and ($adj.Down."char" - $Me.CurrentLevel -le 0)
+        ) {
+            $Me.Visited.Add($adj.Down."coords") | Out-Null;
+            $Me.MoveLocation($adj.Down."coords");
+            $step++;
+            Write-Host "[DEBUG]: loop step $step" -ForegroundColor Yellow
+            $Me.DebugLocation();
+            $Me.DebugVisited();
+            break;
+        }
+        #left
+        if (($null -ne $adj.Left."coords") `
+                -and ($adj.Left."coords" -notin $Me.Visited) `
+                -and ($adj.Left."char" - $Me.CurrentLevel -le 0)
+        ) {
+            $Me.Visited.Add($adj.Left."coords") | Out-Null;
+            $Me.MoveLocation($adj.Left."coords");
+            $step++;
+            Write-Host "[DEBUG]: loop step $step" -ForegroundColor Yellow
+            $Me.DebugLocation();
+            $Me.DebugVisited();
+            break;
+        }
+        #right
+        if (($null -ne $adj.Right."coords") `
+                -and ($adj.Right."coords" -notin $Me.Visited) `
+                -and ($adj.Right."char" - $Me.CurrentLevel -le 0)
+        ) {
+            $Me.Visited.Add($adj.Right."coords") | Out-Null;
+            $Me.MoveLocation($adj.Right."coords");
+            $step++;
+            Write-Host "[DEBUG]: loop step $step" -ForegroundColor Yellow
+            $Me.DebugLocation();
+            $Me.DebugVisited();
+            break;
+        }
+        #up
+        if (($null -ne $adj.Up."coords") `
+                -and ($adj.Up."coords" -notin $Me.Visited) `
+                -and ($adj.Up."char" - $Me.CurrentLevel -le 0)
+        ) {
+            $Me.Visited.Add($adj.Up."coords") | Out-Null;
+            $Me.MoveLocation($adj.Up."coords");
+            $step++;
+            Write-Host "[DEBUG]: loop step $step" -ForegroundColor Yellow
+            $Me.DebugLocation();
+            $Me.DebugVisited();
+            break;
+        }
 
-    $adjMap.Debug();
+        break;
+    }
+
 
     Write-Host "[INFO]: solving part one..." -ForegroundColor Cyan
     Write-Host "[INFO]: part one answer is $answer1" -ForegroundColor Green
