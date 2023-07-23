@@ -51,9 +51,9 @@ class Point {
     [System.Int64]$X = 0;
     [System.Int64]$Y = 0;
 
-    [System.Void]Init($x, $y) {
-        $this.X = $x;
-        $this.Y = $y;
+    [System.Void]Init($pt) {
+        $this.X = $pt.X;
+        $this.Y = $pt.Y;
     }
 }
 
@@ -108,8 +108,7 @@ class Me {
         Write-Host "[ME DEBUG]: my visited" -ForegroundColor Green
         foreach ($point in $this.Visited) {
             [Point]$pt = $point;
-            Write-Host "[ME DEBUG VISITED]: visited point => $($pt.X), $($pt.Y)" -ForegroundColor Cyan
-            Write-Host "[ME DEBUG VISITED]: visited level => $($grid.Rows[$pt.Y][$pt.X])" -ForegroundColor Cyan
+            Write-Host "[ME DEBUG VISITED]: visited point => $($pt.X), $($pt.Y) | visited level => $($grid.Rows[$pt.Y][$pt.X])" -ForegroundColor Cyan
         }
     }
 
@@ -120,10 +119,37 @@ class Me {
         
     }
 
+    [System.Boolean]CanMove([System.Char]$char) {
+        [System.Boolean]$result = $false;
+
+        [System.Int64]$convertedChar = [System.Int64]([System.Char]$char);
+        [System.Int64]$convertedMyChar = [System.Int64]([System.Char]$this.CurrentLevel);
+
+        Write-Host "[DEBUG COMPARE]: converted char $($convertedChar) against my char $($convertedMyChar)" -ForegroundColor Magenta
+
+        $result = ($convertedChar - $convertedMyChar -eq 0) -or ($convertedChar - $convertedMyChar -le 1);
+
+        return $result;
+    }
+
     [System.Void]MoveLocation([Grid]$grid, [Point]$point) {
         $this.MyCoords.X = $point.X;
         $this.MyCoords.Y = $point.Y;
         $this.CurrentLevel = $grid.Rows[$point.Y][$point.X];
+    }
+
+    [System.Boolean]HasVisited([Point]$point) {
+        [Boolean]$result = $false;
+
+        foreach ($pt in $this.Visited) {
+            Write-Host "visited point $($pt.X), $($pt.Y)"
+            if ($pt.X -eq $this.MyCoords.X -and $pt.Y -eq $this.MyCoords.Y) {
+                $result = $true;
+                break;
+            }
+        }
+
+        return $result;
     }
 
     static [AdjacentHashMap]GetAdjacentLevelsFromPoint([Grid]$grid, [Point]$point) {
@@ -131,7 +157,7 @@ class Me {
         [AdjacentHashMap]$adjMap = [AdjacentHashMap]::new(); 
 
         #up
-        if (($point.X - 1) -ne -1) {
+        if (($point.X - 1) -ge 0) {
             $adjMap.Up."coords".X = $point.X - 1;
             $adjMap.Up."coords".Y = $point.Y;
             $adjMap.Up."char" = $grid.Rows[($point.Y)][($point.X - 1)];
@@ -144,14 +170,14 @@ class Me {
         if (($point.X + 1) -le $grid.Rows.Count) {
             $adjMap.Down."coords".X = $point.X + 1;
             $adjMap.Down."coords".Y = $point.Y;
-            $adjMap.Down."char" = $grid.Rows[($point.Y)][$point.X + 1];
+            $adjMap.Down."char" = $grid.Rows[($point.Y)][($point.X + 1)];
         }
         else {
             $adjMap.Down."coords" = $null;
             $adjMap.Down."char" = $null;
         }
         #left
-        if (($point.Y - 1) -ne -1) {
+        if (($point.Y - 1) -ge 0) {
             $adjMap.Left."coords".X = $point.X;
             $adjMap.Left."coords".Y = $point.Y - 1;
             $adjMap.Left."char" = $grid.Rows[($point.Y - 1)][$point.X];
@@ -217,23 +243,23 @@ Function PartOne {
     $Me.DebugLocation();
     # dereference the point from the start
     [Point]$pt = [Point]::new();
-    $pt.Init($Me.MyCoords.X, $Me.MyCoords.Y);
-    
+    $pt.Init($Me.MyCoords);
+
     $Me.Visited.Add($pt) | Out-Null;
     $Me.DebugVisited($Grid);
 
     [System.Int64]$step = 0;
     # while ($Me.CurrentLevel -ne "E") {
-    while ($step -lt 4) {
+    while ($step -lt 3) {
         
         # get adjacent locations from my current location
         [AdjacentHashMap]$adj = [Me]::GetAdjacentLevelsFromPoint($Grid, $Me.MyCoords);
         $adj.Debug();
-        # move to a location based on which adjacent location I can move to
+        # move to a location based on which adjacent location that I can move to
         #down
         if (($null -ne $adj.Down."coords") `
-                -and ($adj.Down."coords" -notin $Me.Visited) `
-                -and ($adj.Down."char" -le $Me.CurrentLevel)
+                -and ($Me.HasVisited($adj.Down."coords")) `
+                -and ($Me.CanMove($adj.Down."char") -or $Me.CurrentLevel -eq "S")
         ) {
             $Me.Visited.Add($adj.Down."coords") | Out-Null;
             $Me.MoveLocation($Grid, $adj.Down."coords");
@@ -245,8 +271,8 @@ Function PartOne {
         }
         #left
         if (($null -ne $adj.Left."coords") `
-                -and ($adj.Left."coords" -notin $Me.Visited) `
-                -and ($adj.Left."char" -le $Me.CurrentLevel)
+                -and ($Me.HasVisited($adj.Left."coords")) `
+                -and ($Me.CanMove($adj.Left."char") -or $Me.CurrentLevel -eq "S")
         ) {
             $Me.Visited.Add($adj.Left."coords") | Out-Null;
             $Me.MoveLocation($Grid, $adj.Left."coords");
@@ -258,8 +284,8 @@ Function PartOne {
         }
         #right
         if (($null -ne $adj.Right."coords") `
-                -and ($adj.Right."coords" -notin $Me.Visited) `
-                -and ($adj.Right."char" -le $Me.CurrentLevel)
+                -and ($Me.HasVisited($adj.Right."coords")) `
+                -and ($Me.CanMove($adj.Right."char") -or $Me.CurrentLevel -eq "S")
         ) {
             $Me.Visited.Add($adj.Right."coords") | Out-Null;
             $Me.MoveLocation($Grid, $adj.Right."coords");
@@ -271,8 +297,8 @@ Function PartOne {
         }
         #up
         if (($null -ne $adj.Up."coords") `
-                -and ($adj.Up."coords" -notin $Me.Visited) `
-                -and ($adj.Up."char" -le $Me.CurrentLevel)
+                -and ($Me.HasVisited($adj.Up."coords")) `
+                -and ($Me.CanMove($adj.Up."char") -or $Me.CurrentLevel -eq "S")
         ) {
             $Me.Visited.Add($adj.Up."coords") | Out-Null;
             $Me.MoveLocation($Grid, $adj.Up."coords");
