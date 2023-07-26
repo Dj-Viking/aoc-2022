@@ -108,7 +108,7 @@ class Me {
         Write-Host "[ME DEBUG]: my visited" -ForegroundColor Green
         foreach ($point in $this.Visited) {
             [Point]$pt = $point;
-            Write-Host "[ME DEBUG VISITED]: visited point => $($pt.X), $($pt.Y) | visited level => $($grid.Rows[$pt.Y][$pt.X])" -ForegroundColor Cyan
+            Write-Host "[ME DEBUG VISITED]: visited point => $($pt.X), $($pt.Y) | visited level => $($grid.Rows[$pt.X][$pt.Y])" -ForegroundColor Cyan
         }
     }
 
@@ -132,17 +132,19 @@ class Me {
         return $result;
     }
 
+    # bias moving to a location that is higher than current by one.
+    # if there isn't a location nearby that is higher favor going the same level
+    # if there isn't a location nearby that is the same level then go down a level
     [System.Void]MoveLocation([Grid]$grid, [Point]$point) {
         $this.MyCoords.X = $point.X;
         $this.MyCoords.Y = $point.Y;
-        $this.CurrentLevel = $grid.Rows[$point.Y][$point.X];
+        $this.CurrentLevel = $grid.Rows[$point.X][$point.Y];
     }
 
     [System.Boolean]HasVisited([Point]$point) {
         [Boolean]$result = $false;
 
         foreach ($pt in $this.Visited) {
-            Write-Host "visited point $($pt.X), $($pt.Y)"
             if ($pt.X -eq $this.MyCoords.X -and $pt.Y -eq $this.MyCoords.Y) {
                 $result = $true;
                 break;
@@ -160,7 +162,7 @@ class Me {
         if (($point.X - 1) -ge 0) {
             $adjMap.Up."coords".X = $point.X - 1;
             $adjMap.Up."coords".Y = $point.Y;
-            $adjMap.Up."char" = $grid.Rows[($point.Y)][($point.X - 1)];
+            $adjMap.Up."char" = $grid.Rows[($point.X - 1)][($point.Y)];
         }
         else {
             $adjMap.Up."coords" = $null;
@@ -170,7 +172,7 @@ class Me {
         if (($point.X + 1) -le $grid.Rows.Count) {
             $adjMap.Down."coords".X = $point.X + 1;
             $adjMap.Down."coords".Y = $point.Y;
-            $adjMap.Down."char" = $grid.Rows[($point.Y)][($point.X + 1)];
+            $adjMap.Down."char" = $grid.Rows[($point.X + 1)][($point.Y)];
         }
         else {
             $adjMap.Down."coords" = $null;
@@ -180,7 +182,7 @@ class Me {
         if (($point.Y - 1) -ge 0) {
             $adjMap.Left."coords".X = $point.X;
             $adjMap.Left."coords".Y = $point.Y - 1;
-            $adjMap.Left."char" = $grid.Rows[($point.Y - 1)][$point.X];
+            $adjMap.Left."char" = $grid.Rows[($point.X)][($point.Y - 1)];
         }
         else {
             $adjMap.Left."coords" = $null;
@@ -190,7 +192,7 @@ class Me {
         if ($point.Y -le $grid.Rows[0].Count) {
             $adjMap.Right."coords".X = $point.X;
             $adjMap.Right."coords".Y = $point.Y + 1;
-            $adjMap.Right."char" = $grid.Rows[($point.Y + 1)][$point.X]
+            $adjMap.Right."char" = $grid.Rows[($point.X)][($point.Y + 1)]
         }
         else {
             $adjMap.Right."coords" = $null;
@@ -205,9 +207,30 @@ class Me {
 class Grid {
     [System.Collections.ArrayList]$Rows = @()
 
-    [System.Void]Debug() {
-        foreach ($row in $this.Rows) {
-            Write-Host "[GRID DEBUG]: row => [$row]" -ForegroundColor Yellow
+    [System.Void]Debug(
+        [Me]$me
+    ) {
+        for ($row = 0; $row -lt $this.Rows.Count; $row++) {
+            for ($col = 0; $col -lt $this.Rows[$row].Count; $col++) {
+                [Point]$pt = [Point]::new();
+                $pt.X = $col;
+                $pt.Y = $row;
+
+                [System.Boolean]$my_curr_level_matches_point_in_grid = $me.CurrentLevel -eq $this.Rows[$row][$col];
+                [System.Boolean]$my_curr_coords_matches_point_in_grid = $me.MyCoords.X -eq $row -and $me.MyCoords.Y -eq $col;
+                [System.Boolean]$my_curr_coords_are_at_start = $me.MyCoords.X -eq 0 -and $me.MyCoords.Y -eq 0 -and $row -eq 0 -and $col -eq 0;
+                
+                if ($my_curr_coords_are_at_start) {
+                    Write-Host " $($this.Rows[$row][$col]) " -NoNewline -ForegroundColor Green
+                }
+                elseif ($my_curr_level_matches_point_in_grid -and $my_curr_coords_matches_point_in_grid) {
+                    Write-Host " $($this.Rows[$row][$col]) " -NoNewline -ForegroundColor Green
+                }
+                else {
+                    Write-Host " $($this.Rows[$row][$col]) " -NoNewline -ForegroundColor Yellow
+                }
+            }
+            Write-Host "";
         }
     }
 
@@ -226,6 +249,11 @@ class Grid {
             $this.Rows.Add($row) | Out-Null;
         }
     }
+
+}
+
+Function Read-HostToIncrementStep() {
+    Read-Host "Press enter to increment step";
 }
 
 Function PartOne {
@@ -235,9 +263,12 @@ Function PartOne {
 
     $Grid.Init($lines);
 
-    $Grid.Debug();
 
     $Me.Init($Grid);
+
+    Write-Host "current level at start $($Me.CurrentLevel) | $($Me.MyCoords.X), $($Me.MyCoords.Y)"
+    
+    # $Grid.Debug($Me);
 
     #start out visited the starting point of my location
     $Me.DebugLocation();
@@ -250,7 +281,10 @@ Function PartOne {
 
     [System.Int64]$step = 0;
     # while ($Me.CurrentLevel -ne "E") {
-    while ($step -lt 3) {
+    while ($step -lt 4) {
+
+        $Grid.Debug($Me);
+
         
         # get adjacent locations from my current location
         [AdjacentHashMap]$adj = [Me]::GetAdjacentLevelsFromPoint($Grid, $Me.MyCoords);
@@ -259,11 +293,14 @@ Function PartOne {
         #down
         if (($null -ne $adj.Down."coords") `
                 -and ($Me.HasVisited($adj.Down."coords")) `
-                -and ($Me.CanMove($adj.Down."char") -or $Me.CurrentLevel -eq "S")
+                -and ($Me.CanMove($adj.Down."char"))
         ) {
             $Me.Visited.Add($adj.Down."coords") | Out-Null;
             $Me.MoveLocation($Grid, $adj.Down."coords");
-            $step++;
+            $myInput = Read-HostToIncrementStep;
+            if ([System.String]::IsNullOrEmpty($myInput)) {
+                $step++;
+            }
             Write-Host "[DEBUG]: loop step $step" -ForegroundColor Yellow
             $Me.DebugLocation();
             $Me.DebugVisited($Grid);
@@ -272,11 +309,14 @@ Function PartOne {
         #left
         if (($null -ne $adj.Left."coords") `
                 -and ($Me.HasVisited($adj.Left."coords")) `
-                -and ($Me.CanMove($adj.Left."char") -or $Me.CurrentLevel -eq "S")
+                -and ($Me.CanMove($adj.Left."char"))
         ) {
             $Me.Visited.Add($adj.Left."coords") | Out-Null;
             $Me.MoveLocation($Grid, $adj.Left."coords");
-            $step++;
+            $myInput = Read-HostToIncrementStep;
+            if ([System.String]::IsNullOrEmpty($myInput)) {
+                $step++;
+            }
             Write-Host "[DEBUG]: loop step $step" -ForegroundColor Yellow
             $Me.DebugLocation();
             $Me.DebugVisited($Grid);
@@ -285,11 +325,14 @@ Function PartOne {
         #right
         if (($null -ne $adj.Right."coords") `
                 -and ($Me.HasVisited($adj.Right."coords")) `
-                -and ($Me.CanMove($adj.Right."char") -or $Me.CurrentLevel -eq "S")
+                -and ($Me.CanMove($adj.Right."char"))
         ) {
             $Me.Visited.Add($adj.Right."coords") | Out-Null;
             $Me.MoveLocation($Grid, $adj.Right."coords");
-            $step++;
+            $myInput = Read-HostToIncrementStep;
+            if ([System.String]::IsNullOrEmpty($myInput)) {
+                $step++;
+            }
             Write-Host "[DEBUG]: loop step $step" -ForegroundColor Yellow
             $Me.DebugLocation();
             $Me.DebugVisited($Grid);
@@ -298,11 +341,14 @@ Function PartOne {
         #up
         if (($null -ne $adj.Up."coords") `
                 -and ($Me.HasVisited($adj.Up."coords")) `
-                -and ($Me.CanMove($adj.Up."char") -or $Me.CurrentLevel -eq "S")
+                -and ($Me.CanMove($adj.Up."char"))
         ) {
             $Me.Visited.Add($adj.Up."coords") | Out-Null;
             $Me.MoveLocation($Grid, $adj.Up."coords");
-            $step++;
+            $myInput = Read-HostToIncrementStep;
+            if ([System.String]::IsNullOrEmpty($myInput)) {
+                $step++;
+            }
             Write-Host "[DEBUG]: loop step $step" -ForegroundColor Yellow
             $Me.DebugLocation();
             $Me.DebugVisited($Grid);
