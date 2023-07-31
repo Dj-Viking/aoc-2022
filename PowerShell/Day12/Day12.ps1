@@ -281,7 +281,7 @@ Function PartOne {
 
     [System.Int64]$step = 0;
     # while ($Me.CurrentLevel -ne "E") {
-    while ($step -lt 4) {
+    while ($step -lt 31) {
 
         $Grid.Debug($Me);
 
