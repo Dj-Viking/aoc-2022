@@ -112,24 +112,18 @@ class Me {
         }
     }
 
-    # can only move in the direction of one letter above, same, or below
-    # gather all possible paths I can take - pick the shortest path to the highest point at E, 
-    # the amount of steps on the shortest path is the answer
-    [System.Void]GetAllPossiblePaths([Grid]$grid, [Point]$point) {
-        
-    }
+    [System.Int64]ConvertCharToInt([System.Char]$chr) {
+        $result = 0;
 
-    [System.Boolean]CanMove([System.Char]$char) {
-        [System.Boolean]$result = $false;
-
-        [System.Int64]$convertedChar = [System.Int64]([System.Char]$char);
-        [System.Int64]$convertedMyChar = [System.Int64]([System.Char]$this.CurrentLevel);
-
-        Write-Host "[DEBUG COMPARE]: converted char $($convertedChar) against my char $($convertedMyChar)" -ForegroundColor Magenta
-
-        $result = ($convertedChar - $convertedMyChar -eq 0) -or ($convertedChar - $convertedMyChar -le 1);
+        $result = [System.Int64]([System.Char]$chr);
 
         return $result;
+    }
+
+    [System.Void]CheckAndMove([Point]$coords, [AdjacentHashMap]$adj) {
+
+        $directions = @("Down", "Up", "Left", "Right");
+
     }
 
     # bias moving to a location that is higher than current by one.
@@ -145,7 +139,7 @@ class Me {
         [Boolean]$result = $false;
 
         foreach ($pt in $this.Visited) {
-            if ($pt.X -eq $this.MyCoords.X -and $pt.Y -eq $this.MyCoords.Y) {
+            if ($pt.X -eq $point.X -and $pt.Y -eq $point.Y) {
                 $result = $true;
                 break;
             }
@@ -155,6 +149,8 @@ class Me {
     }
 
     static [AdjacentHashMap]GetAdjacentLevelsFromPoint([Grid]$grid, [Point]$point) {
+
+        Write-Host "what is point checking adj [$($point.X), $($point.Y)]" -ForegroundColor Yellow;
 
         [AdjacentHashMap]$adjMap = [AdjacentHashMap]::new(); 
 
@@ -289,71 +285,33 @@ Function PartOne {
         # get adjacent locations from my current location
         [AdjacentHashMap]$adj = [Me]::GetAdjacentLevelsFromPoint($Grid, $Me.MyCoords);
         $adj.Debug();
-        # move to a location based on which adjacent location that I can move to
-        #down
-        if (($null -ne $adj.Down."coords") `
-                -and ($Me.HasVisited($adj.Down."coords")) `
-                -and ($Me.CanMove($adj.Down."char"))
-        ) {
-            $Me.Visited.Add($adj.Down."coords") | Out-Null;
-            $Me.MoveLocation($Grid, $adj.Down."coords");
-            $myInput = Read-HostToIncrementStep;
-            if ([System.String]::IsNullOrEmpty($myInput)) {
-                $step++;
+
+        $directions = @("Up", "Down", "Left", "Right");
+
+        :directions foreach ($direction in $directions) {
+            # skip direction if no coordinates available
+            if ($null -eq $adj.$($direction)."coords") { continue; }
+
+            # check if we have visited and we can move that direction
+            # somehow check if the current direction we're checking is the best viable option for now
+            $coords = $adj.$($direction)."coords";
+
+            if (-not $Me.HasVisited(($coords))) {
+                # validate where we should go
+                $Me.CheckAndMove($coords, $adj);
+                break directions;
             }
-            Write-Host "[DEBUG]: loop step $step" -ForegroundColor Yellow
-            $Me.DebugLocation();
-            $Me.DebugVisited($Grid);
-            continue;
         }
-        #left
-        if (($null -ne $adj.Left."coords") `
-                -and ($Me.HasVisited($adj.Left."coords")) `
-                -and ($Me.CanMove($adj.Left."char"))
-        ) {
-            $Me.Visited.Add($adj.Left."coords") | Out-Null;
-            $Me.MoveLocation($Grid, $adj.Left."coords");
-            $myInput = Read-HostToIncrementStep;
-            if ([System.String]::IsNullOrEmpty($myInput)) {
-                $step++;
-            }
-            Write-Host "[DEBUG]: loop step $step" -ForegroundColor Yellow
-            $Me.DebugLocation();
-            $Me.DebugVisited($Grid);
-            continue;
+
+        $myInput = Read-HostToIncrementStep;
+                    
+        if ([System.String]::IsNullOrEmpty($myInput)) {
+            $step++;
         }
-        #right
-        if (($null -ne $adj.Right."coords") `
-                -and ($Me.HasVisited($adj.Right."coords")) `
-                -and ($Me.CanMove($adj.Right."char"))
-        ) {
-            $Me.Visited.Add($adj.Right."coords") | Out-Null;
-            $Me.MoveLocation($Grid, $adj.Right."coords");
-            $myInput = Read-HostToIncrementStep;
-            if ([System.String]::IsNullOrEmpty($myInput)) {
-                $step++;
-            }
-            Write-Host "[DEBUG]: loop step $step" -ForegroundColor Yellow
-            $Me.DebugLocation();
-            $Me.DebugVisited($Grid);
-            continue;
-        }
-        #up
-        if (($null -ne $adj.Up."coords") `
-                -and ($Me.HasVisited($adj.Up."coords")) `
-                -and ($Me.CanMove($adj.Up."char"))
-        ) {
-            $Me.Visited.Add($adj.Up."coords") | Out-Null;
-            $Me.MoveLocation($Grid, $adj.Up."coords");
-            $myInput = Read-HostToIncrementStep;
-            if ([System.String]::IsNullOrEmpty($myInput)) {
-                $step++;
-            }
-            Write-Host "[DEBUG]: loop step $step" -ForegroundColor Yellow
-            $Me.DebugLocation();
-            $Me.DebugVisited($Grid);
-            continue;
-        }
+                    
+        Write-Host "[DEBUG]: loop step $step" -ForegroundColor Yellow
+        $Me.DebugLocation();
+        $Me.DebugVisited($Grid);
 
     }
 
