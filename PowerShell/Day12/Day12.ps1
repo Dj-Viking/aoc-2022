@@ -230,7 +230,7 @@ class Me {
             $adjMap.Up."char" = $null;
         }
         #down
-        if (($point.X + 1) -le $grid.Rows.Count) {
+        if (($point.X + 1) -le ($grid.Rows.Count - 1)) {
             $adjMap.Down."coords".X = $point.X + 1;
             $adjMap.Down."coords".Y = $point.Y;
             $adjMap.Down."char" = $grid.Rows[($point.X + 1)][($point.Y)];
@@ -250,7 +250,7 @@ class Me {
             $adjMap.Left."char" = $null;
         }
         #right
-        if ($point.Y -le $grid.Rows[0].Count) {
+        if (($point.Y + 1) -le ($grid.Rows[0].Count - 1)) {
             $adjMap.Right."coords".X = $point.X;
             $adjMap.Right."coords".Y = $point.Y + 1;
             $adjMap.Right."char" = $grid.Rows[($point.X)][($point.Y + 1)]
