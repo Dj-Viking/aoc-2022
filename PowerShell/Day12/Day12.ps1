@@ -6,6 +6,8 @@ param(
 [String]$answer1 = "answer goes here"
 [String]$answer2 = "answer goes here"
 [String]$myInput = ""
+$global:Directions = @("Down", "Up", "Left", "Right")
+
 
 . $PSScriptRoot\..\ReadInput.ps1
 . $PSScriptRoot\..\ParseLines.ps1
@@ -120,9 +122,72 @@ class Me {
         return $result;
     }
 
-    [System.Void]CheckAndMove([Point]$coords, [AdjacentHashMap]$adj) {
+    [System.Void]MoveLocation([Point]$pt, [System.Char]$level) {
+        $this.MyCoords.X = $pt.X;
+        $this.MyCoords.Y = $pt.Y;
+        $this.CurrentLevel = $level;
+    }
 
-        $directions = @("Down", "Up", "Left", "Right");
+    [System.Void]CheckAndMove([Point]$coordsToValidate, [AdjacentHashMap]$adj) {
+
+        [System.Collections.Hashtable]$hasUpOneLevelOption = 
+        @{
+            onlyDown      = $false
+            onlySameLevel = $false
+            isOption      = $false
+            coords        = [Point]::new()
+            char          = ' '
+        }
+
+        foreach ($direction in $global:Directions) {
+
+            [Point]$adjcoords = $adj.$($direction)."coords";
+            $adjCharInt = $this.ConvertCharToInt($adj.$($direction)."char");
+            $adjChar = $adj.$($direction)."char";
+            $myCharInt = $this.ConvertCharToInt($this.CurrentLevel);
+
+            if ($null -eq $adjcoords) { continue; }
+
+            if ($adjCharInt - $myCharInt -eq 1 -and !$this.HasVisited($adjcoords)) {
+                # definitely move here if adj level is exactly one level up
+                $hasUpOneLevelOption.isOption = $true;
+                $hasUpOneLevelOption.onlySameLevel = $false;
+                $hasUpOneLevelOption.onlyDown = $false;
+                $hasUpOneLevelOption.coords = $adjcoords;
+                $hasUpOneLevelOption.char = $adjChar;
+
+            }
+            if ($adjCharInt - $myCharInt -eq 0 -and !$this.HasVisited($adjcoords)) {
+                # next best option is to just move to the same level
+                if ($hasUpOneLevelOption.isOption) { break; } else {
+                    $hasUpOneLevelOption.onlySameLevel = $true;
+                    $hasUpOneLevelOption.coords = $adjcoords;
+                    $hasUpOneLevelOption.char = $adjChar;
+                }
+            }
+            if ($adjCharInt - $myCharInt -le -1 -and !$this.HasVisited($adjcoords)) {
+                # only option is to go down if the available directions don't yield one level up or same level
+                if ($hasUpOneLevelOption.isOption -or $hasUpOneLevelOption.onlySameLevel) { break; } else {
+                    $hasUpOneLevelOption.onlyDown = $true;
+                    $hasUpOneLevelOption.coords = $adjcoords;
+                    $hasUpOneLevelOption.char = $adjChar;
+                }
+            }
+
+        }
+
+        if ($hasUpOneLevelOption.isOption) {
+            $this.MoveLocation($hasUpOneLevelOption.coords, $hasUpOneLevelOption.char);
+            $this.Visited.Add($hasUpOneLevelOption.coords) | Out-Null;
+        }
+        elseif ($hasUpOneLevelOption.onlySameLevel) {
+            $this.MoveLocation($hasUpOneLevelOption.coords, $hasUpOneLevelOption.char);
+            $this.Visited.Add($hasUpOneLevelOption.coords) | Out-Null;
+        }
+        elseif ($hasUpOneLevelOption.onlyDown) {
+            $this.MoveLocation($hasUpOneLevelOption.coords, $hasUpOneLevelOption.char);
+            $this.Visited.Add($hasUpOneLevelOption.coords) | Out-Null;
+        }
 
     }
 
@@ -286,9 +351,7 @@ Function PartOne {
         [AdjacentHashMap]$adj = [Me]::GetAdjacentLevelsFromPoint($Grid, $Me.MyCoords);
         $adj.Debug();
 
-        $directions = @("Up", "Down", "Left", "Right");
-
-        :directions foreach ($direction in $directions) {
+        :directions foreach ($direction in $global:Directions) {
             # skip direction if no coordinates available
             if ($null -eq $adj.$($direction)."coords") { continue; }
 
