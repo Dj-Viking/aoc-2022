@@ -341,8 +341,8 @@ Function PartOne {
     $Me.DebugVisited($Grid);
 
     [System.Int64]$step = 0;
-    # while ($Me.CurrentLevel -ne "E") {
-    while ($step -lt 31) {
+    while ($Me.ConvertCharToInt($Me.CurrentLevel) -ne $Me.ConvertCharToInt('E')) {
+        # while ($step -lt 31) {
 
         $Grid.Debug($Me);
 
