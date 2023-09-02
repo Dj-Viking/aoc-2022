@@ -130,14 +130,44 @@ class Me {
 
     [System.Void]CheckAndMove([Point]$coordsToValidate, [AdjacentHashMap]$adj) {
 
-        [System.Collections.Hashtable]$hasUpOneLevelOption = 
-        @{
-            onlyDown      = $false
-            onlySameLevel = $false
-            isOption      = $false
-            coords        = [Point]::new()
-            char          = ' '
+        class Node {
+            $coords = [Point]::new()
+            $char = [System.String]" "
+            $isUp = [Boolean]$false
+            $isSame = [Boolean]$false
+            $isDown = [Boolean]$false
+            $direction = [String]"Right"
+         
+            Node($pt, $char, [String]$levelChange, [String]$direction) {
+                $this.coords = $pt;
+                $this.char = $char;
+                $this.direction = $direction;
+                switch ($levelChange) {
+                    "up" {
+                        $this.isUp = $true;
+                        $this.isSame = $false;
+                        $this.isDown = $false;
+                        break;
+                    }
+                    "same" {
+                        $this.isSame = $true;
+                        break;
+                    }
+                    "down" {
+                        $this.isDown = $true;
+                        break;
+                    }
+                }
+            }
         }
+
+        class OptionDeterminer {
+            $upIsOption = [Boolean]$false;
+            $options = [System.Collections.ArrayList]@();
+
+        }
+
+        [OptionDeterminer]$optionDeterminer = [OptionDeterminer]::new();
 
         foreach ($direction in $global:Directions) {
 
@@ -148,45 +178,57 @@ class Me {
 
             if ($null -eq $adjcoords) { continue; }
 
+            # up in height
             if ($adjCharInt - $myCharInt -eq 1 -and !$this.HasVisited($adjcoords)) {
                 # definitely move here if adj level is exactly one level up
-                $hasUpOneLevelOption.isOption = $true;
-                $hasUpOneLevelOption.onlySameLevel = $false;
-                $hasUpOneLevelOption.onlyDown = $false;
-                $hasUpOneLevelOption.coords = $adjcoords;
-                $hasUpOneLevelOption.char = $adjChar;
-
+                $optionDeterminer.upIsOption = $true;
+                $optionDeterminer.options.Add([Node]::new($adjcoords, $adjChar, "up", $direction)) | Out-Null;
             }
+
+            # only same height change
             if ($adjCharInt - $myCharInt -eq 0 -and !$this.HasVisited($adjcoords)) {
                 # next best option is to just move to the same level
-                if ($hasUpOneLevelOption.isOption) { break; } else {
-                    $hasUpOneLevelOption.onlySameLevel = $true;
-                    $hasUpOneLevelOption.coords = $adjcoords;
-                    $hasUpOneLevelOption.char = $adjChar;
+                if ($optionDeterminer.upIsOption) { break; } else {
+                    # gather the options up if we haven't been able to determine if we can move up one level or not
+                    $optionDeterminer.options.Add([Node]::new($adjcoords, $adjchar, "same", $direction)) | Out-Null;
                 }
             }
+
+            # only down in height
             if ($adjCharInt - $myCharInt -le -1 -and !$this.HasVisited($adjcoords)) {
                 # only option is to go down if the available directions don't yield one level up or same level
-                if ($hasUpOneLevelOption.isOption -or $hasUpOneLevelOption.onlySameLevel) { break; } else {
-                    $hasUpOneLevelOption.onlyDown = $true;
-                    $hasUpOneLevelOption.coords = $adjcoords;
-                    $hasUpOneLevelOption.char = $adjChar;
+                if ($optionDeterminer.upIsOption) { break; } else {
+                    $optionDeterminer.options.Add([Node]::new($adjcoords, $adjChar, "down", $direction)) | Out-Null;
                 }
             }
 
         }
 
-        if ($hasUpOneLevelOption.isOption) {
-            $this.MoveLocation($hasUpOneLevelOption.coords, $hasUpOneLevelOption.char);
-            $this.Visited.Add($hasUpOneLevelOption.coords) | Out-Null;
+        if ($optionDeterminer.upIsOption) {
+            [Node]$node = $optionDeterminer.options | Where-Object { $_upIsOption }
+            $this.MoveLocation($node.coords, $node.char);
+            $this.Visited.Add($node.coords) | Out-Null;
         }
-        elseif ($hasUpOneLevelOption.onlySameLevel) {
-            $this.MoveLocation($hasUpOneLevelOption.coords, $hasUpOneLevelOption.char);
-            $this.Visited.Add($hasUpOneLevelOption.coords) | Out-Null;
+        elseif ($optionDeterminer.onlySameLevel) {
+            [Node]$nodes = $optionDeterminer.options | Where-Object {
+                [Node]$_node = [Node]$_;
+    
+                if ($_node.isSame) {
+                    $_node;
+                }
+            }
+            # might have more than one only same level found will have to just choose one i guess
+            foreach ($option in $nodes) {
+                [Node]$n = $option;
+                
+                
+            }
+            $this.MoveLocation($optionDeterminer.coords, $optionDeterminer.char);
+            $this.Visited.Add($optionDeterminer.coords) | Out-Null;
         }
-        elseif ($hasUpOneLevelOption.onlyDown) {
-            $this.MoveLocation($hasUpOneLevelOption.coords, $hasUpOneLevelOption.char);
-            $this.Visited.Add($hasUpOneLevelOption.coords) | Out-Null;
+        elseif ($optionDeterminer.onlyDown) {
+            $this.MoveLocation($optionDeterminer.coords, $optionDeterminer.char);
+            $this.Visited.Add($optionDeterminer.coords) | Out-Null;
         }
 
     }
@@ -219,45 +261,45 @@ class Me {
 
         [AdjacentHashMap]$adjMap = [AdjacentHashMap]::new(); 
 
-        #up
-        if (($point.X - 1) -ge 0) {
-            $adjMap.Up."coords".X = $point.X - 1;
-            $adjMap.Up."coords".Y = $point.Y;
-            $adjMap.Up."char" = $grid.Rows[($point.X - 1)][($point.Y)];
-        }
-        else {
-            $adjMap.Up."coords" = $null;
-            $adjMap.Up."char" = $null;
-        }
         #down
-        if (($point.X + 1) -le ($grid.Rows.Count - 1)) {
-            $adjMap.Down."coords".X = $point.X + 1;
-            $adjMap.Down."coords".Y = $point.Y;
-            $adjMap.Down."char" = $grid.Rows[($point.X + 1)][($point.Y)];
+        if (($point.Y + 1) -le $grid.Rows.Count) {
+            $adjMap.Down."coords".Y = $point.Y + 1;
+            $adjMap.Down."coords".X = $point.X;
+            $adjMap.Down."char" = $grid.Rows[($point.Y + 1)][($point.X)];
         }
         else {
             $adjMap.Down."coords" = $null;
             $adjMap.Down."char" = $null;
         }
-        #left
+        #up
         if (($point.Y - 1) -ge 0) {
-            $adjMap.Left."coords".X = $point.X;
-            $adjMap.Left."coords".Y = $point.Y - 1;
-            $adjMap.Left."char" = $grid.Rows[($point.X)][($point.Y - 1)];
+            $adjMap.Up."coords".Y = $point.Y - 1;
+            $adjMap.Up."coords".X = $point.X;
+            $adjMap.Up."char" = $grid.Rows[($point.Y - 1)][($point.X)];
         }
         else {
-            $adjMap.Left."coords" = $null;
-            $adjMap.Left."char" = $null;
+            $adjMap.Up."coords" = $null;
+            $adjMap.Up."char" = $null;
         }
         #right
-        if (($point.Y + 1) -le ($grid.Rows[0].Count - 1)) {
-            $adjMap.Right."coords".X = $point.X;
-            $adjMap.Right."coords".Y = $point.Y + 1;
-            $adjMap.Right."char" = $grid.Rows[($point.X)][($point.Y + 1)]
+        if (($point.X + 1) -le $grid.Rows[0].Count) {
+            $adjMap.Right."coords".Y = $point.Y;
+            $adjMap.Right."coords".X = $point.X + 1;
+            $adjMap.Right."char" = $grid.Rows[($point.Y)][($point.X + 1)]
         }
         else {
             $adjMap.Right."coords" = $null;
             $adjMap.Right."char" = $null;
+        }
+        #left
+        if (($point.X - 1) -ge 0) {
+            $adjMap.Left."coords".Y = $point.Y;
+            $adjMap.Left."coords".X = $point.X - 1;
+            $adjMap.Left."char" = $grid.Rows[($point.Y)][($point.X - 1)];
+        }
+        else {
+            $adjMap.Left."coords" = $null;
+            $adjMap.Left."char" = $null;
         }
 
         return $adjMap;
