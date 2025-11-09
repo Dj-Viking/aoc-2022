@@ -80,7 +80,7 @@ class Me {
         ]
     #>
     [System.Collections.ArrayList]$PossiblePaths = 
-    # list of points lists
+    # list of point-lists
     @(
         # points list
         # @(
