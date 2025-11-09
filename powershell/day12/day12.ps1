@@ -9,11 +9,8 @@ param(
 $global:Directions = @("Down", "Up", "Left", "Right")
 
 
-. $PSScriptRoot\..\ReadInput.ps1
-. $PSScriptRoot\..\ParseLines.ps1
-
-$myInput = Read-Input $InputFilename $PSScriptRoot
-$lines = Get-InputLines $myInput
+$myInput = get-content $InputFilename -raw
+$lines   = $myInput.split([environment]::newline, [stringsplitoptions]::removeemptyentries);
 
 class AdjacentHashMap {
     [System.Collections.Hashtable]$Up = @{
@@ -53,9 +50,9 @@ class Point {
     [System.Int64]$X = 0;
     [System.Int64]$Y = 0;
 
-    [System.Void]Init($pt) {
-        $this.X = $pt.X;
-        $this.Y = $pt.Y;
+    [System.Void]Init() {
+		$this.X = 0;
+		$this.Y = 0;
     }
 }
 
