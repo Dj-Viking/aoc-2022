@@ -19,7 +19,7 @@ if [ -z "$2" ]
     exit 1
 fi
 
-DAYDIR="Day$1"
+DAYDIR="day$1"
 
 FILE="$2.txt"
 
@@ -31,7 +31,7 @@ cd "$DAYDIR"
 
 echo "printing solution..."
 
-powershell -NoProfile -File "Day$1.ps1" $1 $2
+pwsh -noprofile -command "day$1.ps1 $1 $2"
 
 echo ""
 echo "done"

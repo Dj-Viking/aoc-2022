@@ -9,11 +9,8 @@ param(
 
 Write-Host "what is psscript root $PSScriptRoot" -ForegroundColor Yellow
 
-. $PSScriptRoot\..\ReadInput.ps1
-. $PSScriptRoot\..\ParseLines.ps1
-
-$myInput = Read-Input $InputFilename $PSScriptRoot
-$lines = Get-InputLines $myInput
+$myInput = get-content $InputFilename -raw
+$lines   = $myInput.split([environment]::newline, [stringsplitoptions]::removeemptyentries);
 
 [Int64]$register = 1
 [Int64]$sum = 0
@@ -210,14 +207,14 @@ Function PartOne {
 
         if ($instruction -eq "noop") {
             $cycles = $cycles + 1
-            # Write-Host "noop instruction has cycle $cycles at register $register" -ForegroundColor Green
+            Write-Host "noop instruction has cycle $cycles at register $register" -ForegroundColor Green
             CheckCycle1 $cycles $register 
             continue
         } 
         elseif ($instruction -eq "addx") {
             for ($i = 0; $i -lt 2; $i++) {
                 $cycles = $cycles + 1
-                # Write-Host "addx instruction has cycle $cycles at register $register" -ForegroundColor Yellow
+                Write-Host "addx instruction has cycle $cycles at register $register" -ForegroundColor Yellow
 
                 CheckCycle1 $cycles $register
                 
