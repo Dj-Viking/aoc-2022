@@ -8,7 +8,7 @@ param(
 
 try {
     # SOLVE FILE HERE
-    $file = ".\Day$DayNumber\Day$DayNumber.ps1";
+    $file = ".\day$DayNumber\day$DayNumber.ps1";
     powershell -NoProfile -File $file -InputFile $InputFilename
 }
 catch {

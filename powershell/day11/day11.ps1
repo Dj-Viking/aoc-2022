@@ -7,13 +7,11 @@ param(
 [String]$answer2 = "answer goes here"
 [String]$myInput = ""
 
-. $PSScriptRoot\..\ReadInput.ps1
-. $PSScriptRoot\..\ParseLines.ps1
-. $PSScriptRoot\Get-RoundedDownNumber.ps1
+. $PSScriptRoot\get-roundeddownnumber.ps1
 
 
-$myInput = Read-Input $InputFilename $PSScriptRoot
-[System.Array]$lines = Get-InputLines $myInput
+$myInput = get-content $InputFilename -raw
+$lines   = $myInput.split([environment]::newline, [stringsplitoptions]::removeemptyentries);
 
 class Me {
     [bigint]$Worry = 0
